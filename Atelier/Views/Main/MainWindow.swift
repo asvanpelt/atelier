@@ -12,6 +12,7 @@ struct MainWindow: View {
     let visionRepo: VisionRepository
     let fileWatcher: FileWatcher
     let volumeMonitor: VolumeMonitor
+    let glassTheme: GlassTheme
 
     @State private var gridVM: GridViewModel
     @State private var libraryRoots: [LibraryRoot] = []
@@ -37,6 +38,7 @@ struct MainWindow: View {
     @State private var newPersonName = ""
     @State private var isAnalyzing = false
     @State private var analyzeProgress = ""
+    @State private var thumbnailsBlurred = true
 
     init(
         libraryService: LibraryService,
@@ -48,7 +50,8 @@ struct MainWindow: View {
         personRepo: PersonRepository,
         visionRepo: VisionRepository,
         fileWatcher: FileWatcher,
-        volumeMonitor: VolumeMonitor
+        volumeMonitor: VolumeMonitor,
+        glassTheme: GlassTheme
     ) {
         self.libraryService = libraryService
         self.indexingService = indexingService
@@ -60,173 +63,187 @@ struct MainWindow: View {
         self.visionRepo = visionRepo
         self.fileWatcher = fileWatcher
         self.volumeMonitor = volumeMonitor
+        self.glassTheme = glassTheme
         self._gridVM = State(initialValue: GridViewModel(assetRepo: assetRepo, thumbnailService: thumbnailService))
     }
 
     var body: some View {
-        NavigationSplitView {
-            sidebar
-        } detail: {
-            HStack(spacing: 0) {
-                content
-                if showInspector, let asset = inspectedAsset {
-                    Divider()
-                    InspectorPanel(
-                        asset: asset,
-                        tagRepo: tagRepo,
-                        visionRepo: visionRepo
-                    )
-                }
-            }
-        }
-        .sheet(isPresented: $showLightbox) {
-            LightboxView(
-                assets: gridVM.assets,
-                selectedIndex: lightboxIndex,
-                onClose: { showLightbox = false }
-            )
-        }
-        .sheet(isPresented: $showNewTagSheet) {
-            VStack(spacing: 16) {
-                Text("Nuevo Tag").font(.headline)
-                TextField("Namespace (opcional)", text: $newTagNamespace)
-                    .textFieldStyle(.roundedBorder)
-                TextField("Valor", text: $newTagValue)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Button("Cancelar") { showNewTagSheet = false }
-                    Spacer()
-                    Button("Crear") {
-                        Task {
-                            let ns = newTagNamespace.isEmpty ? nil : newTagNamespace
-                            _ = try? await tagRepo.findOrCreate(namespace: ns, value: newTagValue)
-                            newTagNamespace = ""
-                            newTagValue = ""
-                            showNewTagSheet = false
-                            await loadTagsAndPersons()
-                        }
+        ZStack {
+            NavigationSplitView {
+                sidebar
+            } detail: {
+                HStack(spacing: 0) {
+                    content
+                    if showInspector, let asset = inspectedAsset {
+                        Divider()
+                        InspectorPanel(
+                            asset: asset,
+                            tagRepo: tagRepo,
+                            visionRepo: visionRepo
+                        )
                     }
-                    .disabled(newTagValue.isEmpty)
-                    .buttonStyle(.borderedProminent)
                 }
             }
-            .padding(24)
-            .frame(width: 320)
-        }
-        .sheet(isPresented: $showNewPersonSheet) {
-            VStack(spacing: 16) {
-                Text("Nueva Persona").font(.headline)
-                TextField("Nombre", text: $newPersonName)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Button("Cancelar") { showNewPersonSheet = false }
-                    Spacer()
-                    Button("Crear") {
-                        Task {
-                            let person = Person(id: nil, name: newPersonName, namespace: nil, notes: nil, createdAt: Date())
-                            _ = try? await personRepo.insert(person)
-                            newPersonName = ""
-                            showNewPersonSheet = false
-                            await loadTagsAndPersons()
+            .sheet(isPresented: $showLightbox) {
+                LightboxView(
+                    assets: gridVM.assets,
+                    selectedIndex: lightboxIndex,
+                    onClose: { showLightbox = false }
+                )
+            }
+            .sheet(isPresented: $showNewTagSheet) {
+                VStack(spacing: 16) {
+                    Text("Nuevo Tag").font(.headline)
+                    TextField("Namespace (opcional)", text: $newTagNamespace)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("Valor", text: $newTagValue)
+                        .textFieldStyle(.roundedBorder)
+                    HStack {
+                        Button("Cancelar") { showNewTagSheet = false }
+                        Spacer()
+                        Button("Crear") {
+                            Task {
+                                let ns = newTagNamespace.isEmpty ? nil : newTagNamespace
+                                _ = try? await tagRepo.findOrCreate(namespace: ns, value: newTagValue)
+                                newTagNamespace = ""
+                                newTagValue = ""
+                                showNewTagSheet = false
+                                await loadTagsAndPersons()
+                            }
                         }
+                        .disabled(newTagValue.isEmpty)
+                        .buttonStyle(.borderedProminent)
                     }
-                    .disabled(newPersonName.isEmpty)
-                    .buttonStyle(.borderedProminent)
+                }
+                .padding(24)
+                .frame(width: 320)
+            }
+            .sheet(isPresented: $showNewPersonSheet) {
+                VStack(spacing: 16) {
+                    Text("Nueva Persona").font(.headline)
+                    TextField("Nombre", text: $newPersonName)
+                        .textFieldStyle(.roundedBorder)
+                    HStack {
+                        Button("Cancelar") { showNewPersonSheet = false }
+                        Spacer()
+                        Button("Crear") {
+                            Task {
+                                let person = Person(id: nil, name: newPersonName, namespace: nil, notes: nil, createdAt: Date())
+                                _ = try? await personRepo.insert(person)
+                                newPersonName = ""
+                                showNewPersonSheet = false
+                                await loadTagsAndPersons()
+                            }
+                        }
+                        .disabled(newPersonName.isEmpty)
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+                .padding(24)
+                .frame(width: 320)
+            }
+            .sheet(isPresented: $showWelcome) {
+                WelcomeView(
+                    onAddFolder: {
+                        showWelcome = false
+                        addFolder()
+                    },
+                    onSkip: { showWelcome = false }
+                )
+            }
+            .searchable(text: $searchText, prompt: "Buscar por nombre...")
+            .onChange(of: searchText) { _, newValue in
+                Task {
+                    await gridVM.search(newValue)
                 }
             }
-            .padding(24)
-            .frame(width: 320)
-        }
-        .sheet(isPresented: $showWelcome) {
-            WelcomeView(
-                onAddFolder: {
-                    showWelcome = false
-                    addFolder()
-                },
-                onSkip: { showWelcome = false }
-            )
-        }
-        .searchable(text: $searchText, prompt: "Buscar por nombre...")
-        .onChange(of: searchText) { _, newValue in
-            Task {
-                await gridVM.search(newValue)
-            }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button(action: addFolder) {
-                    Label("Agregar carpeta", systemImage: "folder.badge.plus")
-                }
-                .disabled(isScanning)
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button(action: addFolder) {
+                        Label("Agregar carpeta", systemImage: "folder.badge.plus")
+                    }
+                    .disabled(isScanning)
 
-                Button(action: { Task { await scanAll() } }) {
-                    Label("Escanear", systemImage: "arrow.triangle.2.circlepath")
-                }
-                .disabled(isScanning || libraryRoots.isEmpty)
+                    Button(action: { Task { await scanAll() } }) {
+                        Label("Escanear", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .disabled(isScanning || libraryRoots.isEmpty)
 
-                Button(action: { Task { await analyzeWithVision() } }) {
-                    Label("Analizar Vision", systemImage: "eye")
-                }
-                .disabled(isScanning || isAnalyzing || gridVM.assets.isEmpty)
-                .help("Ejecutar OCR, clasificación y detección de rostros")
+                    Button(action: { Task { await analyzeWithVision() } }) {
+                        Label("Analizar Vision", systemImage: "eye")
+                    }
+                    .disabled(isScanning || isAnalyzing || gridVM.assets.isEmpty)
+                    .help("Ejecutar OCR, clasificación y detección de rostros")
 
-                Button(action: { showInspector.toggle() }) {
-                    Label("Inspector", systemImage: "sidebar.right")
-                }
-                .help("Mostrar/ocultar inspector (⌘I)")
-            }
+                    Button(action: { showInspector.toggle() }) {
+                        Label("Inspector", systemImage: "sidebar.right")
+                    }
+                    .help("Mostrar/ocultar inspector (⌘I)")
 
-            ToolbarItem(placement: .automatic) {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.grid.3x3")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Slider(value: $cellSize, in: 80...400, step: 10)
-                        .frame(width: 100)
-                    Image(systemName: "square.grid.2x2")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Button(action: { thumbnailsBlurred.toggle() }) {
+                        Label("Blur", systemImage: thumbnailsBlurred ? "eye.slash" : "eye")
+                    }
+                    .help(thumbnailsBlurred ? "Mostrar miniaturas" : "Ocultar miniaturas")
                 }
-            }
 
-            ToolbarItem(placement: .status) {
-                if isScanning {
-                    HStack(spacing: 6) {
-                        ProgressView(value: Double(scanCurrent), total: Double(max(1, scanTotal)))
-                            .frame(width: 80)
-                        Text("\(scanCurrent)/\(scanTotal)")
+                ToolbarItem(placement: .automatic) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.grid.3x3")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Slider(value: $cellSize, in: 80...400, step: 10)
+                            .frame(width: 100)
+                        Image(systemName: "square.grid.2x2")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                } else if isAnalyzing {
-                    HStack(spacing: 6) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text(analyzeProgress)
+                }
+
+                ToolbarItem(placement: .status) {
+                    if isScanning {
+                        HStack(spacing: 6) {
+                            ProgressView(value: Double(scanCurrent), total: Double(max(1, scanTotal)))
+                                .frame(width: 80)
+                            Text("\(scanCurrent)/\(scanTotal)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if isAnalyzing {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text(analyzeProgress)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text("\(gridVM.assets.count) de \(gridVM.totalCount) archivos")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                } else {
-                    Text("\(gridVM.assets.count) de \(gridVM.totalCount) archivos")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
             }
-        }
-        .task {
-            await loadRoots()
-            await gridVM.load()
-            await loadTagsAndPersons()
-            if libraryRoots.isEmpty {
-                let hasShownWelcome = UserDefaults.standard.bool(forKey: "hasShownWelcome")
-                if !hasShownWelcome {
-                    showWelcome = true
-                    UserDefaults.standard.set(true, forKey: "hasShownWelcome")
+            .task {
+                await loadRoots()
+                await gridVM.load()
+                await loadTagsAndPersons()
+                if libraryRoots.isEmpty {
+                    let hasShownWelcome = UserDefaults.standard.bool(forKey: "hasShownWelcome")
+                    if !hasShownWelcome {
+                        showWelcome = true
+                        UserDefaults.standard.set(true, forKey: "hasShownWelcome")
+                    }
                 }
+                startFileWatcher()
             }
-            startFileWatcher()
+            .focusable()
+            .toolbarBackground(.hidden, for: .windowToolbar)
+
+            Rectangle()
+                .fill(glassTheme.tintColor)
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
         }
-        .focusable()
     }
 
     // MARK: - Sidebar
@@ -234,6 +251,13 @@ struct MainWindow: View {
     @ViewBuilder
     private var sidebar: some View {
         List(selection: $selectedRootId) {
+            HStack(spacing: 10) {
+                LogoImage(size: 28)
+                Text("Atelier")
+                    .font(.headline)
+            }
+            .padding(.vertical, 4)
+
             Section("Biblioteca") {
                 Label("Todos los archivos", systemImage: "photo.on.rectangle")
                     .badge(gridVM.totalCount)
@@ -325,7 +349,7 @@ struct MainWindow: View {
         } else if gridVM.assets.isEmpty && !gridVM.isLoading {
             noResultsState
         } else {
-            AssetGridView(assets: $gridVM.assets, cellSize: cellSize) { asset in
+            AssetGridView(assets: $gridVM.assets, cellSize: cellSize, isBlurred: thumbnailsBlurred) { asset in
                 if inspectedAsset?.id == asset.id {
                     if let idx = gridVM.assets.firstIndex(where: { $0.id == asset.id }) {
                         lightboxIndex = idx
@@ -342,9 +366,7 @@ struct MainWindow: View {
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+            LogoImage(size: 64)
             Text("Atelier")
                 .font(.title)
                 .foregroundStyle(.secondary)
@@ -365,9 +387,7 @@ struct MainWindow: View {
     private var noResultsState: some View {
         VStack(spacing: 16) {
             Spacer()
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 36))
-                .foregroundStyle(.secondary)
+            LogoImage(size: 48)
             Text("Carpeta agregada")
                 .font(.title2)
                 .foregroundStyle(.secondary)
@@ -428,7 +448,7 @@ struct MainWindow: View {
 
     private func loadRoots() async {
         await libraryService.loadRoots()
-        let roots = await libraryService.roots
+        let roots = libraryService.roots
         libraryRoots = roots
     }
 
@@ -519,7 +539,7 @@ struct MainWindow: View {
 
         fileWatcher.onChange = { [indexingService, gridVM] _ in
             Task {
-                for root in await libraryService.roots {
+                for root in libraryService.roots {
                     await indexingService.scanRoot(root)
                 }
                 await gridVM.refresh()

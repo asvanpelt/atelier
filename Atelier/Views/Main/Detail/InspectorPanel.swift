@@ -43,7 +43,7 @@ struct InspectorPanel: View {
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
                 .contextMenu {
                     if asset.mediaType == .image {
                         Button("Copiar imagen") {
@@ -135,11 +135,10 @@ struct InspectorPanel: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(action: { showAddTag.toggle() }) {
-                    Image(systemName: "plus.circle")
-                        .font(.caption)
-                }
-                .buttonStyle(.borderless)
+                Button("Agregar tag", systemImage: "plus.circle", action: { showAddTag.toggle() })
+                    .labelStyle(.iconOnly)
+                    .font(.caption)
+                    .buttonStyle(.borderless)
             }
 
             FlowLayout(spacing: 4) {
@@ -192,7 +191,7 @@ struct InspectorPanel: View {
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(Color.blue.opacity(c.confidence * 0.4))
-                                    .cornerRadius(4)
+                                    .clipShape(.rect(cornerRadius: 4))
                             }
                         }
                     }
@@ -298,88 +297,6 @@ struct InspectorPanel: View {
         let totalSeconds = ms / 1000
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-}
-
-// MARK: - Tag Chip
-
-struct TagChip: View {
-    let tag: Tag
-    let source: String
-    let confidence: Double?
-    var onRemove: (() -> Void)?
-
-    var body: some View {
-        HStack(spacing: 3) {
-            Text(tag.displayName)
-            if source != TagSource.manual.rawValue {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 7))
-            }
-            if let onRemove {
-                Button(action: onRemove) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 7))
-                }
-                .buttonStyle(.borderless)
-            }
-        }
-        .font(.caption2)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .background(chipColor)
-        .cornerRadius(4)
-    }
-
-    private var chipColor: Color {
-        let c = tag.displayColor
-        if source == TagSource.manual.rawValue || (confidence ?? 0) > 0.9 {
-            return Color(hue: c.hue, saturation: c.saturation, brightness: c.brightness).opacity(0.3)
-        }
-        return Color(hue: c.hue, saturation: c.saturation, brightness: c.brightness).opacity(0.15)
-    }
-}
-
-// MARK: - Flow Layout
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 4
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = computeLayout(proposal: proposal, subviews: subviews)
-        return result.size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = computeLayout(proposal: proposal, subviews: subviews)
-        for (index, position) in result.positions.enumerated() where index < subviews.count {
-            subviews[index].place(
-                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
-                proposal: .unspecified
-            )
-        }
-    }
-
-    private func computeLayout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
-        let maxWidth = proposal.width ?? .infinity
-        var positions: [CGPoint] = []
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth && x > 0 {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            positions.append(CGPoint(x: x, y: y))
-            rowHeight = max(rowHeight, size.height)
-            x += size.width + spacing
-        }
-
-        return (CGSize(width: maxWidth, height: y + rowHeight), positions)
+        return "\(minutes):\(String(format: "%02d", seconds))"
     }
 }

@@ -69,9 +69,8 @@ struct LightboxView: View {
     @ViewBuilder
     private func header(asset: Asset) -> some View {
         HStack {
-            Button(action: { navigate(by: -1) }) {
-                Image(systemName: "chevron.left")
-            }
+            Button("Anterior", systemImage: "chevron.left", action: { navigate(by: -1) })
+            .labelStyle(.iconOnly)
             .disabled(selectedIndex == 0)
             .buttonStyle(.borderless)
 
@@ -87,28 +86,25 @@ struct LightboxView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Button(action: { navigate(by: 1) }) {
-                Image(systemName: "chevron.right")
-            }
+            Button("Siguiente", systemImage: "chevron.right", action: { navigate(by: 1) })
+            .labelStyle(.iconOnly)
             .disabled(selectedIndex >= assets.count - 1)
             .buttonStyle(.borderless)
 
             Spacer().frame(width: 16)
 
             if asset.mediaType == .image {
-                Button(action: { copyImage(asset: asset) }) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.body)
-                }
+                Button("Copiar imagen", systemImage: "doc.on.doc", action: { copyImage(asset: asset) })
+                .labelStyle(.iconOnly)
+                .font(.body)
                 .buttonStyle(.borderless)
                 .help("Copiar imagen (⌘C)")
             }
 
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
+            Button("Cerrar", systemImage: "xmark.circle.fill", action: onClose)
+            .labelStyle(.iconOnly)
+            .font(.title3)
+            .foregroundStyle(.secondary)
             .buttonStyle(.borderless)
         }
         .padding(.horizontal)
@@ -211,6 +207,6 @@ struct LightboxView: View {
         let totalSeconds = ms / 1000
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
+        return "\(minutes):\(String(format: "%02d", seconds))"
     }
 }

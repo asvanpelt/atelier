@@ -1,6 +1,7 @@
 import Foundation
 
-final class LibraryService: @unchecked Sendable {
+@MainActor
+final class LibraryService {
     private let rootRepo: LibraryRootRepository
     private let assetRepo: AssetRepository
     private let bookmarkManager: BookmarkManager

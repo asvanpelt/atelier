@@ -1,7 +1,7 @@
 import Foundation
 
 final class FileWatcher: @unchecked Sendable {
-    private var timer: Timer?
+    private var pollingTask: Task<Void, Never>?
     private var watchedURLs: [URL] = []
     private var lastCheck: [URL: Date] = [:]
     var onChange: (([URL]) -> Void)?
@@ -16,17 +16,18 @@ final class FileWatcher: @unchecked Sendable {
         watchedURLs = urls
         lastCheck = [:]
 
-        DispatchQueue.main.async { [weak self] in
+        pollingTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            self.timer = Timer.scheduledTimer(withTimeInterval: self.scanInterval, repeats: true) { [weak self] _ in
-                self?.checkForChanges()
-            }
+            repeat {
+                self.checkForChanges()
+                try? await Task.sleep(for: .seconds(self.scanInterval))
+            } while !Task.isCancelled
         }
     }
 
     func stop() {
-        timer?.invalidate()
-        timer = nil
+        pollingTask?.cancel()
+        pollingTask = nil
         watchedURLs = []
     }
 

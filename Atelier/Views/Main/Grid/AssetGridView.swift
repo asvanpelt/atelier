@@ -4,6 +4,7 @@ import AppKit
 struct AssetGridView: NSViewRepresentable {
     @Binding var assets: [Asset]
     var cellSize: CGFloat
+    var isBlurred: Bool
     var onSelect: ((Asset) -> Void)?
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -36,6 +37,7 @@ struct AssetGridView: NSViewRepresentable {
 
         coordinator.assets = assets
         coordinator.onSelect = onSelect
+        coordinator.isBlurred = isBlurred
 
         if coordinator.currentCellSize != cellSize {
             coordinator.currentCellSize = cellSize
@@ -46,11 +48,17 @@ struct AssetGridView: NSViewRepresentable {
 
         if assetsChanged {
             coordinator.collectionView?.reloadData()
+        } else if let cv = coordinator.collectionView {
+            for (index, item) in cv.visibleItems().enumerated() {
+                if let cell = item as? AssetCell, index < assets.count {
+                    cell.isBlurred = isBlurred
+                }
+            }
         }
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(assets: assets, onSelect: onSelect, cellSize: cellSize)
+        Coordinator(assets: assets, onSelect: onSelect, isBlurred: isBlurred, cellSize: cellSize)
     }
 
     private func createLayout(size: CGFloat) -> NSCollectionViewFlowLayout {
@@ -66,12 +74,14 @@ struct AssetGridView: NSViewRepresentable {
     final class Coordinator: NSObject, NSCollectionViewDataSource, NSCollectionViewDelegate {
         var assets: [Asset]
         var onSelect: ((Asset) -> Void)?
+        var isBlurred: Bool
         var currentCellSize: CGFloat
         weak var collectionView: NSCollectionView?
 
-        init(assets: [Asset], onSelect: ((Asset) -> Void)?, cellSize: CGFloat) {
+        init(assets: [Asset], onSelect: ((Asset) -> Void)?, isBlurred: Bool, cellSize: CGFloat) {
             self.assets = assets
             self.onSelect = onSelect
+            self.isBlurred = isBlurred
             self.currentCellSize = cellSize
         }
 
@@ -82,6 +92,7 @@ struct AssetGridView: NSViewRepresentable {
         func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
             let item = collectionView.makeItem(withIdentifier: AssetCell.identifier, for: indexPath)
             if let cell = item as? AssetCell, indexPath.item < assets.count {
+                cell.isBlurred = isBlurred
                 cell.configure(with: assets[indexPath.item])
             }
             return item

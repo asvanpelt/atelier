@@ -8,12 +8,10 @@ struct WelcomeView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
+            LogoImage(size: 80)
 
             Text("Bienvenido a Atelier")
-                .font(.largeTitle.weight(.bold))
+                .font(.largeTitle.bold())
 
             Text("Tu biblioteca multimedia local.\nAtelier indexa tus archivos sin moverlos de su ubicación original.")
                 .multilineTextAlignment(.center)

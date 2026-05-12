@@ -1,6 +1,7 @@
 import SwiftUI
 import Observation
 
+@MainActor
 @Observable
 final class GridViewModel {
     var assets: [Asset] = []

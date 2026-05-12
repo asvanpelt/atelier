@@ -14,6 +14,7 @@ struct AtelierApp: App {
     let visionRepo: VisionRepository
     let fileWatcher: FileWatcher
     let volumeMonitor: VolumeMonitor
+    let glassTheme = GlassTheme()
 
     init() {
         NSApplication.shared.setActivationPolicy(.regular)
@@ -79,7 +80,8 @@ struct AtelierApp: App {
                 personRepo: personRepo,
                 visionRepo: visionRepo,
                 fileWatcher: fileWatcher,
-                volumeMonitor: volumeMonitor
+                volumeMonitor: volumeMonitor,
+                glassTheme: glassTheme
             )
         }
         .defaultSize(width: 1000, height: 700)
@@ -95,6 +97,7 @@ struct AtelierApp: App {
         Settings {
             PreferencesView(
                 libraryRoots: libraryService.roots,
+                glassTheme: glassTheme,
                 onAddFolder: {}
             )
         }

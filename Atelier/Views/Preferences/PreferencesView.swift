@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PreferencesView: View {
     var libraryRoots: [LibraryRoot]
+    @Bindable var glassTheme: GlassTheme
     var onAddFolder: () -> Void
     var onRemoveRoot: ((Int64) -> Void)?
 
@@ -14,6 +15,9 @@ struct PreferencesView: View {
             generalTab
                 .tabItem { Label("General", systemImage: "gear") }
 
+            appearanceTab
+                .tabItem { Label("Apariencia", systemImage: "paintpalette") }
+
             librariesTab
                 .tabItem { Label("Bibliotecas", systemImage: "folder") }
 
@@ -23,7 +27,7 @@ struct PreferencesView: View {
             advancedTab
                 .tabItem { Label("Avanzado", systemImage: "wrench.adjustable") }
         }
-        .frame(width: 500, height: 360)
+        .frame(width: 500, height: 380)
         .padding()
     }
 
@@ -39,6 +43,49 @@ struct PreferencesView: View {
                     Text("\(Int(defaultCellSize))px")
                         .monospacedDigit()
                         .frame(width: 50)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var appearanceTab: some View {
+        Form {
+            Section("Color del tema") {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Tono")
+                        Spacer()
+                        Slider(value: $glassTheme.tintHue, in: 0...1)
+                            .frame(width: 200)
+                    }
+
+                    ColorPicker("Previsualización", selection: Binding(
+                        get: { Color(hue: glassTheme.tintHue, saturation: 0.65, brightness: 0.95) },
+                        set: { newColor in
+                            let nsColor = NSColor(newColor)
+                            glassTheme.tintHue = Double(nsColor.hueComponent)
+                        }
+                    ))
+                    .disabled(true)
+                }
+            }
+
+            Section("Transparencia") {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Opacidad")
+                        Spacer()
+                        Slider(value: $glassTheme.opacity, in: 0.02...0.40)
+                            .frame(width: 200)
+                        Text("\(Int(glassTheme.opacity * 100))%")
+                            .monospacedDigit()
+                            .frame(width: 40)
+                    }
+                    Text("A menor porcentaje, más sutil el efecto glass")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -69,14 +116,13 @@ struct PreferencesView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
-                        Button(action: {
+                        Button("Eliminar", systemImage: "trash") {
                             if let id = root.id {
                                 onRemoveRoot?(id)
                             }
-                        }) {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
                         }
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(.red)
                         .buttonStyle(.borderless)
                     }
                 }

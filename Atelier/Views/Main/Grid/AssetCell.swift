@@ -13,6 +13,7 @@ final class AssetCell: NSCollectionViewItem {
 
     var onShowInFinder: ((Asset) -> Void)?
     var onOpenWith: ((Asset) -> Void)?
+    var isBlurred = true
 
     override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
@@ -104,7 +105,7 @@ final class AssetCell: NSCollectionViewItem {
 
         if asset.mediaType == .video, let durationMs = asset.durationMs {
             let totalSec = durationMs / 1000
-            videoBadge.stringValue = String(format: " %d:%02d ", totalSec / 60, totalSec % 60)
+            videoBadge.stringValue = " \(totalSec / 60):\(String(format: "%02d", totalSec % 60)) "
             videoBadge.isHidden = false
         } else if asset.mediaType == .video {
             videoBadge.stringValue = " ▶ "
@@ -113,6 +114,8 @@ final class AssetCell: NSCollectionViewItem {
             videoBadge.isHidden = true
         }
 
+        updateBlur()
+
         let hashPrefix = String(asset.fileHash.prefix(8))
         let thumbPath = AppConstants.thumbnailsDir
             .appendingPathComponent("400")
@@ -120,18 +123,27 @@ final class AssetCell: NSCollectionViewItem {
             .appendingPathComponent("\(asset.id ?? 0).jpg")
 
         let filePath = asset.filePath
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let image: NSImage?
-            if FileManager.default.fileExists(atPath: thumbPath.path) {
-                image = NSImage(contentsOf: thumbPath)
-            } else {
-                image = NSWorkspace.shared.icon(forFile: filePath)
-                image?.size = NSSize(width: 200, height: 200)
-            }
+        Task { @MainActor [weak self] in
+            let image = await Task.detached(priority: .userInitiated) {
+                if FileManager.default.fileExists(atPath: thumbPath.path) {
+                    return NSImage(contentsOf: thumbPath)
+                } else {
+                    let icon = NSWorkspace.shared.icon(forFile: filePath)
+                    icon.size = NSSize(width: 200, height: 200)
+                    return icon
+                }
+            }.value
+            self?.thumbnailView.image = image
+        }
+    }
 
-            DispatchQueue.main.async {
-                self?.thumbnailView.image = image
-            }
+    // MARK: - Blur
+
+    func updateBlur() {
+        if isBlurred {
+            thumbnailView.contentFilters = [CIFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: 12])!]
+        } else {
+            thumbnailView.contentFilters = []
         }
     }
 
