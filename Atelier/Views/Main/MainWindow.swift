@@ -346,17 +346,21 @@ struct MainWindow: View {
         } else if gridVM.assets.isEmpty && !gridVM.isLoading {
             noResultsState
         } else {
-            AssetGridView(assets: $gridVM.assets, cellSize: cellSize, isBlurred: thumbnailsBlurred) { asset in
-                if inspectedAsset?.id == asset.id {
+            AssetGridView(
+                assets: $gridVM.assets,
+                cellSize: cellSize,
+                isBlurred: thumbnailsBlurred,
+                onSelect: { asset in
+                    inspectedAsset = asset
+                    showInspector = true
+                },
+                onDoubleClick: { asset in
                     if let idx = gridVM.assets.firstIndex(where: { $0.id == asset.id }) {
                         lightboxIndex = idx
                         showLightbox = true
                     }
-                } else {
-                    inspectedAsset = asset
-                    showInspector = true
                 }
-            }
+            )
         }
     }
 

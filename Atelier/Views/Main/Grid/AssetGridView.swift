@@ -6,6 +6,7 @@ struct AssetGridView: NSViewRepresentable {
     var cellSize: CGFloat
     var isBlurred: Bool
     var onSelect: ((Asset) -> Void)?
+    var onDoubleClick: ((Asset) -> Void)?
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -14,8 +15,10 @@ struct AssetGridView: NSViewRepresentable {
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = false
 
+        let layout = createLayout(size: cellSize)
+
         let collectionView = NSCollectionView()
-        collectionView.collectionViewLayout = createLayout(size: cellSize)
+        collectionView.collectionViewLayout = layout
         collectionView.dataSource = context.coordinator
         collectionView.delegate = context.coordinator
         collectionView.isSelectable = true
@@ -34,53 +37,57 @@ struct AssetGridView: NSViewRepresentable {
         let coordinator = context.coordinator
         let assetsChanged = coordinator.assets.count != assets.count ||
             coordinator.assets.first?.id != assets.first?.id
+        let blurChanged = coordinator.isBlurred != isBlurred
 
         coordinator.assets = assets
         coordinator.onSelect = onSelect
+        coordinator.onDoubleClick = onDoubleClick
         coordinator.isBlurred = isBlurred
 
-        if coordinator.currentCellSize != cellSize {
-            coordinator.currentCellSize = cellSize
-            if let cv = coordinator.collectionView {
-                cv.collectionViewLayout = createLayout(size: cellSize)
+        if let layout = coordinator.collectionView?.collectionViewLayout as? MasonryCollectionViewLayout {
+            if coordinator.currentCellSize != cellSize {
+                coordinator.currentCellSize = cellSize
+                layout.cellWidth = cellSize
             }
+            layout.items = assets
         }
 
         if assetsChanged {
             coordinator.collectionView?.reloadData()
-        } else if let cv = coordinator.collectionView {
-            for (index, item) in cv.visibleItems().enumerated() {
-                if let cell = item as? AssetCell, index < assets.count {
+        } else if blurChanged, let cv = coordinator.collectionView {
+            for item in cv.visibleItems() {
+                if let cell = item as? AssetCell {
                     cell.isBlurred = isBlurred
+                    cell.updateBlur()
                 }
             }
         }
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(assets: assets, onSelect: onSelect, isBlurred: isBlurred, cellSize: cellSize)
+        Coordinator(assets: assets, onSelect: onSelect, onDoubleClick: onDoubleClick, isBlurred: isBlurred, cellSize: cellSize)
     }
 
-    private func createLayout(size: CGFloat) -> NSCollectionViewFlowLayout {
-        let layout = NSCollectionViewFlowLayout()
-        layout.minimumInteritemSpacing = 2
-        layout.minimumLineSpacing = 2
+    private func createLayout(size: CGFloat) -> MasonryCollectionViewLayout {
+        let layout = MasonryCollectionViewLayout()
+        layout.cellWidth = size
+        layout.spacing = 2
         layout.sectionInset = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
-        layout.itemSize = NSSize(width: size, height: size)
-        layout.scrollDirection = .vertical
         return layout
     }
 
     final class Coordinator: NSObject, NSCollectionViewDataSource, NSCollectionViewDelegate {
         var assets: [Asset]
         var onSelect: ((Asset) -> Void)?
+        var onDoubleClick: ((Asset) -> Void)?
         var isBlurred: Bool
         var currentCellSize: CGFloat
         weak var collectionView: NSCollectionView?
 
-        init(assets: [Asset], onSelect: ((Asset) -> Void)?, isBlurred: Bool, cellSize: CGFloat) {
+        init(assets: [Asset], onSelect: ((Asset) -> Void)?, onDoubleClick: ((Asset) -> Void)?, isBlurred: Bool, cellSize: CGFloat) {
             self.assets = assets
             self.onSelect = onSelect
+            self.onDoubleClick = onDoubleClick
             self.isBlurred = isBlurred
             self.currentCellSize = cellSize
         }
@@ -93,6 +100,7 @@ struct AssetGridView: NSViewRepresentable {
             let item = collectionView.makeItem(withIdentifier: AssetCell.identifier, for: indexPath)
             if let cell = item as? AssetCell, indexPath.item < assets.count {
                 cell.isBlurred = isBlurred
+                cell.onDoubleClick = onDoubleClick
                 cell.configure(with: assets[indexPath.item])
             }
             return item

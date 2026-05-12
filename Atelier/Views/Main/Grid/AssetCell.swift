@@ -13,12 +13,13 @@ final class AssetCell: NSCollectionViewItem {
 
     var onShowInFinder: ((Asset) -> Void)?
     var onOpenWith: ((Asset) -> Void)?
+    var onDoubleClick: ((Asset) -> Void)?
     var isBlurred = true
 
     override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
         view.wantsLayer = true
-        view.layer?.cornerRadius = 6
+        view.layer?.cornerRadius = 8
         view.layer?.masksToBounds = true
 
         thumbnailView.imageScaling = .scaleProportionallyUpOrDown
@@ -250,6 +251,9 @@ final class AssetCell: NSCollectionViewItem {
 
     override func mouseDown(with event: NSEvent) {
         super.mouseDown(with: event)
+        if event.clickCount == 2, let asset = currentAsset {
+            onDoubleClick?(asset)
+        }
     }
 
     override func mouseDragged(with event: NSEvent) {
