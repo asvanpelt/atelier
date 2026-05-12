@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct LogoImage: View {
-    var size: CGFloat = 64
+    var size: CGFloat?
 
     var body: some View {
-        if let url = Bundle.module.url(forResource: "logo", withExtension: "png"),
+        if let url = Bundle.module.url(forResource: "logo_trans", withExtension: "png"),
            let image = NSImage(contentsOf: url) {
             Image(nsImage: image)
                 .resizable()
@@ -12,7 +12,7 @@ struct LogoImage: View {
                 .frame(width: size, height: size)
         } else {
             Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: size * 0.75))
+                .font(.system(size: (size ?? 64) * 0.75))
                 .foregroundStyle(.secondary)
                 .frame(width: size, height: size)
         }

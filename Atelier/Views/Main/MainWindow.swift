@@ -251,12 +251,9 @@ struct MainWindow: View {
     @ViewBuilder
     private var sidebar: some View {
         List(selection: $selectedRootId) {
-            HStack(spacing: 10) {
-                LogoImage(size: 28)
-                Text("Atelier")
-                    .font(.headline)
-            }
-            .padding(.vertical, 4)
+            LogoImage(size: nil)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
 
             Section("Biblioteca") {
                 Label("Todos los archivos", systemImage: "photo.on.rectangle")
