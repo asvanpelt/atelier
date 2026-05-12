@@ -5,6 +5,7 @@ struct LightboxView: View {
     let assets: [Asset]
     @State var selectedIndex: Int
     var onClose: () -> Void
+    var glassTint: Color = .clear
 
     @State private var player: AVPlayer?
     @FocusState private var isFocused: Bool
@@ -23,14 +24,17 @@ struct LightboxView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .padding()
+                        .layoutPriority(1)
                 } else {
                     placeholder
                 }
 
                 infoBar(asset: asset)
             }
-            .frame(minWidth: 700, minHeight: 500)
-            .background(.ultraThinMaterial)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(idealWidth: idealWidth(for: asset), idealHeight: 850)
+            .background(.ultraThickMaterial)
+            .background(glassTint)
             .focusable()
             .focused($isFocused)
             .onAppear { isFocused = true }
@@ -116,6 +120,7 @@ struct LightboxView: View {
     private func videoPlayer(asset: Asset) -> some View {
         VideoPlayer(player: playerForAsset(asset))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .layoutPriority(1)
             .onAppear {
                 updatePlayer()
             }
@@ -201,6 +206,12 @@ struct LightboxView: View {
             }
         }
         return NSImage(contentsOf: asset.fileURL)
+    }
+
+    private func idealWidth(for asset: Asset) -> CGFloat {
+        guard let w = asset.width, let h = asset.height, h > 0 else { return 1160 }
+        let aspect = CGFloat(w) / CGFloat(h)
+        return max(600, min(1800, 850 * aspect))
     }
 
     private func formatDuration(_ ms: Int) -> String {

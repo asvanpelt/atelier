@@ -2,8 +2,8 @@ import AppKit
 
 final class MasonryCollectionViewLayout: NSCollectionViewLayout, @unchecked Sendable {
     var cellWidth: CGFloat = 200
-    var spacing: CGFloat = 4
-    var sectionInset: NSEdgeInsets = NSEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+    var spacing: CGFloat = 6
+    var sectionInset: NSEdgeInsets = NSEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
     var items: [Asset] = [] {
         didSet { invalidateLayout() }
     }

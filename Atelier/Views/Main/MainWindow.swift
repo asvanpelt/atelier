@@ -69,6 +69,11 @@ struct MainWindow: View {
 
     var body: some View {
         ZStack {
+            Rectangle()
+                .fill(glassTheme.tintColor)
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
+
             NavigationSplitView {
                 sidebar
             } detail: {
@@ -88,7 +93,8 @@ struct MainWindow: View {
                 LightboxView(
                     assets: gridVM.assets,
                     selectedIndex: lightboxIndex,
-                    onClose: { showLightbox = false }
+                    onClose: { showLightbox = false },
+                    glassTint: glassTheme.tintColor
                 )
             }
             .sheet(isPresented: $showNewTagSheet) {
@@ -238,11 +244,6 @@ struct MainWindow: View {
             }
             .focusable()
             .toolbarBackground(.hidden, for: .windowToolbar)
-
-            Rectangle()
-                .fill(glassTheme.tintColor)
-                .allowsHitTesting(false)
-                .ignoresSafeArea()
         }
     }
 
