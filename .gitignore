@@ -1,0 +1,49 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+._*
+
+# Modelos descargados
+Atelier/Resources/Models/*.mlpackage
+Atelier/Resources/Models/*.bin
+Atelier/Resources/Models/*.safetensors
+!Atelier/Resources/Models/README.md
+
+# App data
+*.db
+*.db-wal
+*.db-shm
+
+# Logs
+*.log
+
+# Secrets
+.env
+*.p12
+*.cer
+
+# IDE
+.idea/
+.vscode/
+
+# Claude Code
+skills-lock.json

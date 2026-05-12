@@ -1,0 +1,209 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		PROJ0000000000000000000002 /* AtelierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000001 /* AtelierApp.swift */; };
+		PROJ0000000000000000000004 /* Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000003 /* Environment.swift */; };
+		PROJ0000000000000000000006 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000005 /* Database.swift */; };
+		PROJ0000000000000000000008 /* M001_InitialSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000007 /* M001_InitialSchema.swift */; };
+		PROJ0000000000000000000010 /* M002_VectorTables.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000009 /* M002_VectorTables.swift */; };
+		PROJ0000000000000000000012 /* M003_OrganizeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000011 /* M003_OrganizeEngine.swift */; };
+		PROJ0000000000000000000014 /* AssetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000013 /* AssetRepository.swift */; };
+		PROJ0000000000000000000016 /* LibraryRootRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000015 /* LibraryRootRepository.swift */; };
+		PROJ0000000000000000000018 /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000017 /* BookmarkManager.swift */; };
+		PROJ0000000000000000000020 /* FileHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000019 /* FileHasher.swift */; };
+		PROJ0000000000000000000022 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000021 /* FileWatcher.swift */; };
+		PROJ0000000000000000000024 /* VolumeMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000023 /* VolumeMonitor.swift */; };
+		PROJ0000000000000000000026 /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000025 /* Asset.swift */; };
+		PROJ0000000000000000000028 /* LibraryRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000027 /* LibraryRoot.swift */; };
+		PROJ0000000000000000000030 /* IndexingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000029 /* IndexingService.swift */; };
+		PROJ0000000000000000000032 /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000031 /* LibraryService.swift */; };
+		PROJ0000000000000000000034 /* ThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000033 /* ThumbnailService.swift */; };
+		PROJ0000000000000000000036 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000035 /* Constants.swift */; };
+		PROJ0000000000000000000038 /* Debouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000037 /* Debouncer.swift */; };
+		PROJ0000000000000000000040 /* URL+Atelier.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000039 /* URL+Atelier.swift */; };
+		PROJ0000000000000000000042 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000041 /* Logger.swift */; };
+		PROJ0000000000000000000044 /* GridViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000043 /* GridViewModel.swift */; };
+		PROJ0000000000000000000046 /* LightboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000045 /* LightboxView.swift */; };
+		PROJ0000000000000000000048 /* AssetCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000047 /* AssetCell.swift */; };
+		PROJ0000000000000000000050 /* AssetGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000049 /* AssetGridView.swift */; };
+		PROJ0000000000000000000052 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = PROJ0000000000000000000051 /* MainWindow.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		PROJ0000000000000000000001 /* AtelierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtelierApp.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000003 /* Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environment.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000005 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000007 /* M001_InitialSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M001_InitialSchema.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000009 /* M002_VectorTables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M002_VectorTables.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000011 /* M003_OrganizeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M003_OrganizeEngine.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000013 /* AssetRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetRepository.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000015 /* LibraryRootRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryRootRepository.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000017 /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkManager.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000019 /* FileHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileHasher.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000021 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000023 /* VolumeMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeMonitor.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000025 /* Asset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Asset.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000027 /* LibraryRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryRoot.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000029 /* IndexingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndexingService.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000031 /* LibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryService.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000033 /* ThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailService.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000035 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000037 /* Debouncer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Debouncer.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000039 /* URL+Atelier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL+Atelier.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000041 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000043 /* GridViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridViewModel.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000045 /* LightboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightboxView.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000047 /* AssetCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCell.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000049 /* AssetGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetGridView.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000051 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
+		PROJ0000000000000000000053 /* Atelier.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Atelier.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		PROJ0000000000000000000076 /* Grid */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000047 /* AssetCell.swift */,
+				PROJ0000000000000000000049 /* AssetGridView.swift */,
+			); path = Grid; sourceTree = "<group>"; };
+		PROJ0000000000000000000077 /* Detail */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000045 /* LightboxView.swift */,
+			); path = Detail; sourceTree = "<group>"; };
+		PROJ0000000000000000000075 /* Main */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000051 /* MainWindow.swift */,
+				PROJ0000000000000000000076 /* Main */,
+				PROJ0000000000000000000077 /* Main */,
+			); path = Main; sourceTree = "<group>"; };
+		PROJ0000000000000000000074 /* Views */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000075 /* Views */,
+			); path = Views; sourceTree = "<group>"; };
+		PROJ0000000000000000000073 /* Extensions */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000039 /* URL+Atelier.swift */,
+			); path = Extensions; sourceTree = "<group>"; };
+		PROJ0000000000000000000072 /* Utilities */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000035 /* Constants.swift */,
+				PROJ0000000000000000000037 /* Debouncer.swift */,
+				PROJ0000000000000000000041 /* Logger.swift */,
+				PROJ0000000000000000000073 /* Utilities */,
+			); path = Utilities; sourceTree = "<group>"; };
+		PROJ0000000000000000000070 /* Migrations */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000007 /* M001_InitialSchema.swift */,
+				PROJ0000000000000000000009 /* M002_VectorTables.swift */,
+				PROJ0000000000000000000011 /* M003_OrganizeEngine.swift */,
+			); path = Migrations; sourceTree = "<group>"; };
+		PROJ0000000000000000000071 /* Repositories */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000013 /* AssetRepository.swift */,
+				PROJ0000000000000000000015 /* LibraryRootRepository.swift */,
+			); path = Repositories; sourceTree = "<group>"; };
+		PROJ0000000000000000000069 /* Database */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000005 /* Database.swift */,
+				PROJ0000000000000000000070 /* Database */,
+				PROJ0000000000000000000071 /* Database */,
+			); path = Database; sourceTree = "<group>"; };
+		PROJ0000000000000000000068 /* App */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000001 /* AtelierApp.swift */,
+				PROJ0000000000000000000003 /* Environment.swift */,
+			); path = App; sourceTree = "<group>"; };
+		PROJ0000000000000000000078 /* Models */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000025 /* Asset.swift */,
+				PROJ0000000000000000000027 /* LibraryRoot.swift */,
+			); path = Models; sourceTree = "<group>"; };
+		PROJ0000000000000000000079 /* Services */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000029 /* IndexingService.swift */,
+				PROJ0000000000000000000031 /* LibraryService.swift */,
+				PROJ0000000000000000000033 /* ThumbnailService.swift */,
+			); path = Services; sourceTree = "<group>"; };
+		PROJ0000000000000000000080 /* FileSystem */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000017 /* BookmarkManager.swift */,
+				PROJ0000000000000000000019 /* FileHasher.swift */,
+				PROJ0000000000000000000021 /* FileWatcher.swift */,
+				PROJ0000000000000000000023 /* VolumeMonitor.swift */,
+			); path = FileSystem; sourceTree = "<group>"; };
+		PROJ0000000000000000000081 /* ViewModels */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000043 /* GridViewModel.swift */,
+			); path = ViewModels; sourceTree = "<group>"; };
+		PROJ0000000000000000000054 /* Atelier */ = {isa = PBXGroup; children = (
+				PROJ0000000000000000000068 /* Atelier */,
+				PROJ0000000000000000000069 /* Atelier */,
+				PROJ0000000000000000000072 /* Atelier */,
+				PROJ0000000000000000000074 /* Atelier */,
+				PROJ0000000000000000000078 /* Atelier */,
+				PROJ0000000000000000000079 /* Atelier */,
+				PROJ0000000000000000000080 /* Atelier */,
+				PROJ0000000000000000000081 /* Atelier */,
+			); path = Atelier; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		PROJ0000000000000000000058 /* Atelier */ = {isa = PBXNativeTarget; buildConfigurationList = PROJ0000000000000000000063; buildPhases = (PROJ0000000000000000000055, PROJ0000000000000000000056, PROJ0000000000000000000057); buildRules = (); dependencies = (); name = Atelier; packageProductDependencies = (PROJ0000000000000000000067); productName = Atelier; productReference = PROJ0000000000000000000053; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		PROJ0000000000000000000059 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1620; LastUpgradeCheck = 1620; }; buildConfigurationList = PROJ0000000000000000000060; compatibilityVersion = "Xcode 14.0"; developmentRegion = "es-AR"; hasScannedForEncodings = 0; knownRegions = (en, Base, "es-AR"); mainGroup = PROJ0000000000000000000054; packageReferences = (PROJ0000000000000000000066); productRefGroup = PROJ0000000000000000000054; projectDirPath = ""; projectRoot = ""; targets = (PROJ0000000000000000000058); };
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		PROJ0000000000000000000055 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+				PROJ0000000000000000000002 /* AtelierApp.swift in Sources */,
+				PROJ0000000000000000000004 /* Environment.swift in Sources */,
+				PROJ0000000000000000000006 /* Database.swift in Sources */,
+				PROJ0000000000000000000008 /* M001_InitialSchema.swift in Sources */,
+				PROJ0000000000000000000010 /* M002_VectorTables.swift in Sources */,
+				PROJ0000000000000000000012 /* M003_OrganizeEngine.swift in Sources */,
+				PROJ0000000000000000000014 /* AssetRepository.swift in Sources */,
+				PROJ0000000000000000000016 /* LibraryRootRepository.swift in Sources */,
+				PROJ0000000000000000000018 /* BookmarkManager.swift in Sources */,
+				PROJ0000000000000000000020 /* FileHasher.swift in Sources */,
+				PROJ0000000000000000000022 /* FileWatcher.swift in Sources */,
+				PROJ0000000000000000000024 /* VolumeMonitor.swift in Sources */,
+				PROJ0000000000000000000026 /* Asset.swift in Sources */,
+				PROJ0000000000000000000028 /* LibraryRoot.swift in Sources */,
+				PROJ0000000000000000000030 /* IndexingService.swift in Sources */,
+				PROJ0000000000000000000032 /* LibraryService.swift in Sources */,
+				PROJ0000000000000000000034 /* ThumbnailService.swift in Sources */,
+				PROJ0000000000000000000036 /* Constants.swift in Sources */,
+				PROJ0000000000000000000038 /* Debouncer.swift in Sources */,
+				PROJ0000000000000000000040 /* URL+Atelier.swift in Sources */,
+				PROJ0000000000000000000042 /* Logger.swift in Sources */,
+				PROJ0000000000000000000044 /* GridViewModel.swift in Sources */,
+				PROJ0000000000000000000046 /* LightboxView.swift in Sources */,
+				PROJ0000000000000000000048 /* AssetCell.swift in Sources */,
+				PROJ0000000000000000000050 /* AssetGridView.swift in Sources */,
+				PROJ0000000000000000000052 /* MainWindow.swift in Sources */,
+			); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		PROJ0000000000000000000056 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		PROJ0000000000000000000057 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		PROJ0000000000000000000061 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ANALYZER_NONNULL = YES; CLANG_CXX_LANGUAGE_STANDARD = "gnu++20"; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; ENABLE_STRICT_OBJC_MSGSEND = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 6.0; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; GCC_DYNAMIC_NO_PIC = NO; GCC_OPTIMIZATION_LEVEL = 0; GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)"); MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE; ONLY_ACTIVE_ARCH = YES; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"}; name = Debug; };
+		PROJ0000000000000000000062 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ANALYZER_NONNULL = YES; CLANG_CXX_LANGUAGE_STANDARD = "gnu++20"; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; ENABLE_STRICT_OBJC_MSGSEND = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 6.0; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; ENABLE_NS_ASSERTIONS = NO; GCC_OPTIMIZATION_LEVEL = s; MTL_ENABLE_DEBUG_INFO = NO; SWIFT_COMPILATION_MODE = wholemodule; VALIDATE_PRODUCT = YES}; name = Release; };
+		PROJ0000000000000000000064 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = Atelier; INFOPLIST_KEY_CFBundleIdentifier = "com.ereerea.atelier"; INFOPLIST_KEY_CFBundleName = Atelier; INFOPLIST_KEY_CFBundleShortVersionString = "0.1.0"; INFOPLIST_KEY_CFBundleVersion = 1; INFOPLIST_KEY_LSMinimumSystemVersion = "14.0"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks"); MARKETING_VERSION = "0.1.0"; PRODUCT_BUNDLE_IDENTIFIER = "com.ereerea.atelier"; PRODUCT_NAME = Atelier; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 6.0}; name = Debug; };
+		PROJ0000000000000000000065 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = Atelier; INFOPLIST_KEY_CFBundleIdentifier = "com.ereerea.atelier"; INFOPLIST_KEY_CFBundleName = Atelier; INFOPLIST_KEY_CFBundleShortVersionString = "0.1.0"; INFOPLIST_KEY_CFBundleVersion = 1; INFOPLIST_KEY_LSMinimumSystemVersion = "14.0"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks"); MARKETING_VERSION = "0.1.0"; PRODUCT_BUNDLE_IDENTIFIER = "com.ereerea.atelier"; PRODUCT_NAME = Atelier; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 6.0}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		PROJ0000000000000000000060 /* Build configuration list for PBXProject "Atelier" */ = {isa = XCConfigurationList; buildConfigurations = (PROJ0000000000000000000061, PROJ0000000000000000000062); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		PROJ0000000000000000000063 /* Build configuration list for PBXNativeTarget "Atelier" */ = {isa = XCConfigurationList; buildConfigurations = (PROJ0000000000000000000064, PROJ0000000000000000000065); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		PROJ0000000000000000000066 /* XCRemoteSwiftPackageReference "groue.GRDB.swift" */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/groue/GRDB.swift.git"; requirement = {kind = upToNextMajorVersion; minimumVersion = 6.29.0; }; };
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		PROJ0000000000000000000067 /* GRDB */ = {isa = XCSwiftPackageProductDependency; package = PROJ0000000000000000000066; productName = GRDB; };
+/* End XCSwiftPackageProductDependency section */
+
+	};
+	rootObject = PROJ0000000000000000000059 /* Project object */;
+}
