@@ -30,7 +30,6 @@ struct MainWindow: View {
     @State private var showWelcome = false
     @State private var allTags: [Tag] = []
     @State private var allPersons: [Person] = []
-    @State private var showTagPopover = false
     @State private var showNewTagSheet = false
     @State private var showNewPersonSheet = false
     @State private var newTagNamespace = ""
@@ -187,7 +186,7 @@ struct MainWindow: View {
                     .help("Mostrar/ocultar inspector (⌘I)")
 
                     Button(action: { thumbnailsBlurred.toggle() }) {
-                        Label("Blur", systemImage: thumbnailsBlurred ? "eye.slash" : "eye")
+                        Label("Blur", systemImage: thumbnailsBlurred ? "eye.slash.fill" : "eye.fill")
                     }
                     .help(thumbnailsBlurred ? "Mostrar miniaturas" : "Ocultar miniaturas")
                 }

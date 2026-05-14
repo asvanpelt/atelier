@@ -5,7 +5,6 @@ final class AssetCell: NSCollectionViewItem {
     static let identifier = NSUserInterfaceItemIdentifier("AssetCell")
 
     private let thumbnailView = NSImageView()
-    private let nameLabel = NSTextField()
     private let videoBadge = NSTextField()
     private let selectionOverlay = NSView()
     private var trackingArea: NSTrackingArea?
@@ -37,18 +36,6 @@ final class AssetCell: NSCollectionViewItem {
         selectionOverlay.isHidden = true
         view.addSubview(selectionOverlay)
 
-        nameLabel.isEditable = false
-        nameLabel.isBordered = false
-        nameLabel.backgroundColor = NSColor.black.withAlphaComponent(0.5)
-        nameLabel.textColor = .white
-        nameLabel.font = .systemFont(ofSize: 10)
-        nameLabel.lineBreakMode = .byTruncatingMiddle
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.wantsLayer = true
-        nameLabel.layer?.cornerRadius = 3
-        nameLabel.isHidden = true
-        view.addSubview(nameLabel)
-
         videoBadge.isEditable = false
         videoBadge.isBordered = false
         videoBadge.backgroundColor = NSColor.black.withAlphaComponent(0.6)
@@ -71,10 +58,6 @@ final class AssetCell: NSCollectionViewItem {
             selectionOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             selectionOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             selectionOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            nameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 4),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -4),
-            nameLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
 
             videoBadge.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
             videoBadge.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),

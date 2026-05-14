@@ -16,10 +16,16 @@ final class GlassTheme {
 
     init() {
         let defaults = UserDefaults.standard
-        let savedHue = defaults.double(forKey: "glassTintHue")
-        tintHue = (0...1).contains(savedHue) && savedHue > 0.001 ? savedHue : 0.60
-        let savedOpacity = defaults.double(forKey: "glassOpacity")
-        opacity = (0...1).contains(savedOpacity) && savedOpacity > 0.001 ? savedOpacity : 0.12
+        if let saved = defaults.object(forKey: "glassTintHue") as? Double, (0...1).contains(saved) {
+            tintHue = saved
+        } else {
+            tintHue = 0.60
+        }
+        if let saved = defaults.object(forKey: "glassOpacity") as? Double, (0...1).contains(saved) {
+            opacity = saved
+        } else {
+            opacity = 0.12
+        }
     }
 
     private func save() {

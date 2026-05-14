@@ -45,11 +45,14 @@ struct AssetGridView: NSViewRepresentable {
         coordinator.isBlurred = isBlurred
 
         if let layout = coordinator.collectionView?.collectionViewLayout as? MasonryCollectionViewLayout {
-            if coordinator.currentCellSize != cellSize {
+            let sizeChanged = coordinator.currentCellSize != cellSize
+            if sizeChanged {
                 coordinator.currentCellSize = cellSize
                 layout.cellWidth = cellSize
             }
-            layout.items = assets
+            if assetsChanged || sizeChanged {
+                layout.items = assets
+            }
         }
 
         if assetsChanged {

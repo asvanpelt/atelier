@@ -21,7 +21,6 @@ final class GridViewModel {
         self.thumbnailService = thumbnailService
     }
 
-    @MainActor
     func load() async {
         isLoading = true
         defer { isLoading = false }
@@ -40,19 +39,16 @@ final class GridViewModel {
         }
     }
 
-    @MainActor
     func filterByRoot(_ rootPath: String?) async {
         filterRootPath = rootPath
         await load()
     }
 
-    @MainActor
     func search(_ query: String) async {
         searchQuery = query
         await load()
     }
 
-    @MainActor
     func refresh() async {
         await load()
     }
