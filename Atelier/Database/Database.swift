@@ -44,6 +44,12 @@ final class Database {
         migrator.registerMigration("M003_OrganizeEngine") { db in
             try M003_OrganizeEngine.migrate(db)
         }
+        migrator.registerMigration("M004_AssetSource") { db in
+            try M004_AssetSource.migrate(db)
+        }
+        migrator.registerMigration("M005_FaceClustering") { db in
+            try M005_FaceClustering.migrate(db)
+        }
 
         try migrator.migrate(pool)
         self.dbPool = pool

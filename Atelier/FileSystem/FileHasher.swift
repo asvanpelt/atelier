@@ -30,6 +30,8 @@ actor FileHasher {
             hasher.update(data: chunk)
         }
 
-        return hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+        return hasher.finalize().compactMap { byte in
+            String(byte, radix: 16, uppercase: false).padding(toLength: 2, withPad: "0", startingAt: 0)
+        }.joined()
     }
 }

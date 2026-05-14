@@ -10,6 +10,7 @@ struct MainWindow: View {
     let tagRepo: TagRepository
     let personRepo: PersonRepository
     let visionRepo: VisionRepository
+    let clusteringService: FaceClusteringService
     let fileWatcher: FileWatcher
     let volumeMonitor: VolumeMonitor
     let glassTheme: GlassTheme
@@ -38,6 +39,15 @@ struct MainWindow: View {
     @State private var isAnalyzing = false
     @State private var analyzeProgress = ""
     @State private var thumbnailsBlurred = true
+    @State private var showTagsManager = false
+    @Environment(\.openWindow) private var openWindow
+    @State private var isDetectingSources = false
+    @State private var sourceDetectProgress = ""
+    @State private var isClustering = false
+    @State private var clusterProgress = ""
+    @State private var sourceSummary: [(source: String, count: Int)] = []
+    @State private var accountsCache: [String: [(account: String, count: Int)]] = [:]
+    @State private var expandedSources: Set<String> = []
 
     init(
         libraryService: LibraryService,
@@ -48,6 +58,7 @@ struct MainWindow: View {
         tagRepo: TagRepository,
         personRepo: PersonRepository,
         visionRepo: VisionRepository,
+        clusteringService: FaceClusteringService,
         fileWatcher: FileWatcher,
         volumeMonitor: VolumeMonitor,
         glassTheme: GlassTheme
@@ -60,6 +71,7 @@ struct MainWindow: View {
         self.tagRepo = tagRepo
         self.personRepo = personRepo
         self.visionRepo = visionRepo
+        self.clusteringService = clusteringService
         self.fileWatcher = fileWatcher
         self.volumeMonitor = volumeMonitor
         self.glassTheme = glassTheme
@@ -83,7 +95,8 @@ struct MainWindow: View {
                         InspectorPanel(
                             asset: asset,
                             tagRepo: tagRepo,
-                            visionRepo: visionRepo
+                            visionRepo: visionRepo,
+                            personRepo: personRepo
                         )
                     }
                 }
@@ -147,6 +160,15 @@ struct MainWindow: View {
                 .padding(24)
                 .frame(width: 320)
             }
+            .sheet(isPresented: $showTagsManager) {
+                TagsManagerSheet(
+                    tagRepo: tagRepo,
+                    onClose: { showTagsManager = false },
+                    onFilterByTag: { tag in
+                        Task { await filterByTag(tag) }
+                    }
+                )
+            }
             .sheet(isPresented: $showWelcome) {
                 WelcomeView(
                     onAddFolder: {
@@ -161,6 +183,9 @@ struct MainWindow: View {
                 Task {
                     await gridVM.search(newValue)
                 }
+            }
+            .onChange(of: thumbnailsBlurred) { _, newValue in
+                if !newValue { showInspector = false }
             }
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
@@ -179,6 +204,22 @@ struct MainWindow: View {
                     }
                     .disabled(isScanning || isAnalyzing || gridVM.assets.isEmpty)
                     .help("Ejecutar OCR, clasificación y detección de rostros")
+
+                    Button(action: { showTagsManager = true }) {
+                        Label("Tags", systemImage: "tag")
+                    }
+                    .help("Administrar tags")
+
+                    Button(action: { Task { await detectSources() } }) {
+                        Label("Detectar origen", systemImage: "scope")
+                    }
+                    .disabled(isDetectingSources || gridVM.assets.isEmpty)
+                    .help("Detectar origen y cuenta a partir del nombre de archivo")
+
+                    Button(action: { openWindow(id: "organize") }) {
+                        Label("Organizar", systemImage: "folder.badge.gearshape")
+                    }
+                    .help("Reorganizar físicamente los archivos en carpetas")
 
                     Button(action: { showInspector.toggle() }) {
                         Label("Inspector", systemImage: "sidebar.right")
@@ -221,6 +262,14 @@ struct MainWindow: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    } else if isDetectingSources {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text(sourceDetectProgress)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     } else {
                         Text("\(gridVM.assets.count) de \(gridVM.totalCount) archivos")
                             .font(.caption)
@@ -232,6 +281,7 @@ struct MainWindow: View {
                 await loadRoots()
                 await gridVM.load()
                 await loadTagsAndPersons()
+                await loadSourceSummary()
                 if libraryRoots.isEmpty {
                     let hasShownWelcome = UserDefaults.standard.bool(forKey: "hasShownWelcome")
                     if !hasShownWelcome {
@@ -259,6 +309,8 @@ struct MainWindow: View {
                 Label("Todos los archivos", systemImage: "photo.on.rectangle")
                     .badge(gridVM.totalCount)
                     .tag(Int64(-1))
+                Label("Administrar caras", systemImage: "person.2.crop.square.stack")
+                    .tag(Int64(-2))
             }
 
             Section("Carpetas") {
@@ -302,6 +354,17 @@ struct MainWindow: View {
                 }
             }
 
+            Section("Orígenes") {
+                ForEach(sourceSummary, id: \.source) { entry in
+                    sourceDisclosureRow(source: entry.source, count: entry.count)
+                }
+                if sourceSummary.isEmpty {
+                    Text("Aún no hay orígenes detectados")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Personas") {
                 ForEach(allPersons, id: \.id) { person in
                     Label(person.name, systemImage: "person.crop.circle")
@@ -335,11 +398,59 @@ struct MainWindow: View {
         }
     }
 
+    @ViewBuilder
+    private func sourceDisclosureRow(source: String, count: Int) -> some View {
+        let kind = AssetSource(rawValue: source) ?? .unknown
+        let isExpanded = expandedSources.contains(source)
+        let accounts = accountsCache[source] ?? []
+
+        DisclosureGroup(
+            isExpanded: Binding(
+                get: { isExpanded },
+                set: { newVal in
+                    if newVal {
+                        expandedSources.insert(source)
+                        Task { await loadAccounts(for: source) }
+                    } else {
+                        expandedSources.remove(source)
+                    }
+                }
+            )
+        ) {
+            ForEach(accounts, id: \.account) { entry in
+                Label("@\(entry.account)", systemImage: "person.crop.circle")
+                    .badge(entry.count)
+                    .onTapGesture {
+                        Task { await filterBySource(source, account: entry.account) }
+                    }
+            }
+            if accounts.isEmpty && isExpanded {
+                Text("Sin cuentas")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } label: {
+            Label(kind.label, systemImage: kind.symbol)
+                .badge(count)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Task { await filterBySource(source, account: nil) }
+                }
+        }
+    }
+
     // MARK: - Content
 
     @ViewBuilder
     private var content: some View {
-        if libraryRoots.isEmpty && !showWelcome {
+        if selectedRootId == -2 {
+            PeopleManagerView(
+                personRepo: personRepo,
+                visionRepo: visionRepo,
+                assetRepo: assetRepo,
+                thumbnailService: thumbnailService
+            )
+        } else if libraryRoots.isEmpty && !showWelcome {
             emptyState
         } else if gridVM.assets.isEmpty && !gridVM.isLoading && !searchText.isEmpty {
             noSearchResults
@@ -351,6 +462,7 @@ struct MainWindow: View {
                 cellSize: cellSize,
                 isBlurred: thumbnailsBlurred,
                 onSelect: { asset in
+                    guard thumbnailsBlurred else { return }
                     inspectedAsset = asset
                     showInspector = true
                 },
@@ -365,62 +477,39 @@ struct MainWindow: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            LogoImage(size: 64)
-            Text("Atelier")
-                .font(.title)
-                .foregroundStyle(.secondary)
-            Text("Agregá una carpeta para empezar a indexar")
-                .font(.body)
-                .foregroundStyle(.tertiary)
-            Button(action: addFolder) {
-                Label("Agregar carpeta...", systemImage: "folder.badge.plus")
+        ContentUnavailableView {
+            VStack(spacing: 12) {
+                LogoImage(size: 64)
+                Text("Atelier").font(.title).foregroundStyle(.secondary)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            Spacer()
+        } description: {
+            Text("Agregá una carpeta para empezar a indexar")
+        } actions: {
+            Button("Agregar carpeta...", systemImage: "folder.badge.plus", action: addFolder)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
     }
 
     private var noResultsState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            LogoImage(size: 48)
-            Text("Carpeta agregada")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+        ContentUnavailableView {
+            VStack(spacing: 12) {
+                LogoImage(size: 48)
+                Text("Carpeta agregada").font(.title2).foregroundStyle(.secondary)
+            }
+        } description: {
             Text("Hacé clic en Escanear para indexar los archivos")
-                .font(.body)
-                .foregroundStyle(.tertiary)
-            Button(action: { Task { await scanAll() } }) {
-                Label("Escanear ahora", systemImage: "arrow.triangle.2.circlepath")
+        } actions: {
+            Button("Escanear ahora", systemImage: "arrow.triangle.2.circlepath") {
+                Task { await scanAll() }
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
     }
 
     private var noSearchResults: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Image(systemName: "doc.questionmark")
-                .font(.system(size: 36))
-                .foregroundStyle(.secondary)
-            Text("Sin resultados para \"\(searchText)\"")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-            Text("Probá con otro término de búsqueda")
-                .font(.body)
-                .foregroundStyle(.tertiary)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ContentUnavailableView.search
     }
 
     // MARK: - Actions
@@ -521,6 +610,66 @@ struct MainWindow: View {
         analyzeProgress = ""
         isAnalyzing = false
         await loadTagsAndPersons()
+    }
+
+    private func detectSources() async {
+        isDetectingSources = true
+        defer { isDetectingSources = false }
+        do {
+            let pending = try await assetRepo.allWithoutSource()
+            let total = pending.count
+            for (idx, asset) in pending.enumerated() {
+                guard let id = asset.id else { continue }
+                let result = SourceDetector.detect(filename: (asset.filePath as NSString).lastPathComponent)
+                if result.source != .unknown {
+                    try await assetRepo.updateSource(id: id, source: result.source.rawValue, account: result.account)
+                }
+                sourceDetectProgress = "Detectando \(idx + 1)/\(total)…"
+            }
+            sourceDetectProgress = ""
+            await loadSourceSummary()
+        } catch {
+            Logger.ui.error("Error detectando origen: \(error)")
+        }
+    }
+
+    private func loadSourceSummary() async {
+        do {
+            sourceSummary = try await assetRepo.sourceSummary()
+            accountsCache.removeAll()
+        } catch {
+            Logger.ui.error("Error cargando orígenes: \(error)")
+        }
+    }
+
+    private func loadAccounts(for source: String) async {
+        guard accountsCache[source] == nil else { return }
+        do {
+            accountsCache[source] = try await assetRepo.accountsForSource(source)
+        } catch {
+            Logger.ui.error("Error cargando cuentas: \(error)")
+        }
+    }
+
+    private func filterBySource(_ source: String, account: String?) async {
+        do {
+            let assets = try await assetRepo.findBySource(source, account: account)
+            await gridVM.filterByAssetIds(assets.compactMap(\.id))
+            selectedRootId = nil
+        } catch {
+            Logger.ui.error("Error filtrando por origen: \(error)")
+        }
+    }
+
+    private func filterByTag(_ tag: Tag) async {
+        guard let tagId = tag.id else { return }
+        do {
+            let ids = try await tagRepo.assetsFor(tagId: tagId)
+            await gridVM.filterByAssetIds(ids)
+            selectedRootId = nil
+        } catch {
+            Logger.ui.error("Error filtrando por tag: \(error)")
+        }
     }
 
     private func loadTagsAndPersons() async {

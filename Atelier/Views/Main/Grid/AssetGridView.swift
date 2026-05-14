@@ -74,8 +74,8 @@ struct AssetGridView: NSViewRepresentable {
     private func createLayout(size: CGFloat) -> MasonryCollectionViewLayout {
         let layout = MasonryCollectionViewLayout()
         layout.cellWidth = size
-        layout.spacing = 2
-        layout.sectionInset = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+        layout.spacing = 24
+        layout.sectionInset = NSEdgeInsets(top: 24, left: 24, bottom: 24, right: 24)
         return layout
     }
 

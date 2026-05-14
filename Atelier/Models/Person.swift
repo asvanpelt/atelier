@@ -25,6 +25,8 @@ struct Person: Codable {
     }
 }
 
+extension Person: Identifiable {}
+
 extension Person: FetchableRecord, PersistableRecord, TableRecord {
     static let databaseTableName = "persons"
 

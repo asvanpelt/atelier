@@ -11,17 +11,17 @@ struct TagChip: View {
             Text(tag.displayName)
             if source != TagSource.manual.rawValue {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 7))
+                    .font(.caption)
             }
             if let onRemove {
                 Button(action: onRemove) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 7))
+                        .font(.caption)
                 }
                 .buttonStyle(.borderless)
             }
         }
-        .font(.caption2)
+        .font(.caption)
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
         .background(chipColor)

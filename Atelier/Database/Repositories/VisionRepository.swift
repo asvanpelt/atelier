@@ -132,6 +132,163 @@ final class VisionRepository: @unchecked Sendable {
         }
     }
 
+    func unassignedFaces(limit: Int = 500) async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation.fetchAll(db, sql: """
+                SELECT * FROM face_observations
+                WHERE person_id IS NULL AND id IN (
+                    SELECT MIN(id) FROM face_observations
+                    WHERE person_id IS NULL
+                    GROUP BY asset_id
+                )
+                ORDER BY asset_id DESC
+                LIMIT ?
+                """, arguments: [limit])
+        }
+    }
+
+    func unassignedFaceCount() async throws -> Int {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try Int.fetchOne(db, sql:
+                "SELECT COUNT(*) FROM face_observations WHERE person_id IS NULL"
+            ) ?? 0
+        }
+    }
+
+    func confirmedFacesFor(personId: Int64) async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation
+                .filter(FaceObservation.Columns.personId == personId)
+                .filter(FaceObservation.Columns.isConfirmed == true)
+                .fetchAll(db)
+        }
+    }
+
+    func mergePersons(from sourceId: Int64, into targetId: Int64) async throws {
+        guard sourceId != targetId else { return }
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "UPDATE face_observations SET person_id = ? WHERE person_id = ?",
+                arguments: [targetId, sourceId]
+            )
+            try db.execute(sql: "DELETE FROM persons WHERE id = ?", arguments: [sourceId])
+        }
+    }
+
+    func updateEmbedding(id: Int64, data: Data) async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "UPDATE face_observations SET embedding = ? WHERE id = ?",
+                arguments: [data, id]
+            )
+        }
+    }
+
+    func updateCluster(id: Int64, clusterId: Int64?) async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "UPDATE face_observations SET cluster_id = ? WHERE id = ?",
+                arguments: [clusterId, id]
+            )
+        }
+    }
+
+    func facesWithEmbeddingUnassigned() async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation
+                .filter(FaceObservation.Columns.personId == nil)
+                .filter(FaceObservation.Columns.embedding != nil)
+                .fetchAll(db)
+        }
+    }
+
+    func facesNeedingEmbedding(limit: Int = 5000) async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation
+                .filter(FaceObservation.Columns.embedding == nil)
+                .limit(limit)
+                .fetchAll(db)
+        }
+    }
+
+    func confirmedFacesWithEmbedding() async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation
+                .filter(FaceObservation.Columns.personId != nil)
+                .filter(FaceObservation.Columns.isConfirmed == true)
+                .filter(FaceObservation.Columns.embedding != nil)
+                .fetchAll(db)
+        }
+    }
+
+    func nextClusterId() async throws -> Int64 {
+        let pool = try db.pool
+        return try await pool.read { db in
+            (try Int64.fetchOne(db, sql: "SELECT COALESCE(MAX(cluster_id), 0) FROM face_observations") ?? 0) + 1
+        }
+    }
+
+    func clusterSummary() async throws -> [(clusterId: Int64, count: Int, sampleFaceId: Int64)] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT cluster_id, COUNT(*) AS c, MIN(id) AS sample
+                FROM face_observations
+                WHERE person_id IS NULL AND cluster_id IS NOT NULL
+                GROUP BY cluster_id
+                ORDER BY c DESC
+                """).map { row in
+                (row["cluster_id"] as Int64, row["c"] as Int, row["sample"] as Int64)
+            }
+        }
+    }
+
+    func facesInCluster(_ clusterId: Int64) async throws -> [FaceObservation] {
+        let pool = try db.pool
+        return try await pool.read { db in
+            try FaceObservation
+                .filter(FaceObservation.Columns.clusterId == clusterId)
+                .filter(FaceObservation.Columns.personId == nil)
+                .fetchAll(db)
+        }
+    }
+
+    func assignClusterToPerson(clusterId: Int64, personId: Int64) async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "UPDATE face_observations SET person_id = ?, is_confirmed = 1 WHERE cluster_id = ? AND person_id IS NULL",
+                arguments: [personId, clusterId]
+            )
+        }
+    }
+
+    func resetClusters() async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(sql: "UPDATE face_observations SET cluster_id = NULL WHERE person_id IS NULL")
+        }
+    }
+
+    func reassignFace(id: Int64, toPersonId: Int64) async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "UPDATE face_observations SET person_id = ?, is_confirmed = 1 WHERE id = ?",
+                arguments: [toPersonId, id]
+            )
+        }
+    }
+
     func faceCountFor(personId: Int64) async throws -> Int {
         let pool = try db.pool
         return try await pool.read { db in

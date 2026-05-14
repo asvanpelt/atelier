@@ -23,6 +23,8 @@ struct Asset: Codable {
     var indexedAt: Date?
     var indexingVersion: Int
     var deletedAt: Date?
+    var source: String?
+    var sourceAccount: String?
 
     enum Columns {
         static let id = Column(CodingKeys.id)
@@ -40,6 +42,8 @@ struct Asset: Codable {
         static let indexedAt = Column(CodingKeys.indexedAt)
         static let indexingVersion = Column(CodingKeys.indexingVersion)
         static let deletedAt = Column(CodingKeys.deletedAt)
+        static let source = Column(CodingKeys.source)
+        static let sourceAccount = Column(CodingKeys.sourceAccount)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -58,6 +62,8 @@ struct Asset: Codable {
         case indexedAt = "indexed_at"
         case indexingVersion = "indexing_version"
         case deletedAt = "deleted_at"
+        case source
+        case sourceAccount = "source_account"
     }
 }
 

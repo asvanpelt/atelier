@@ -129,7 +129,7 @@ struct LightboxView: View {
     @ViewBuilder
     private var placeholder: some View {
         Image(systemName: "photo")
-            .font(.system(size: 80))
+            .font(.largeTitle)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -218,6 +218,6 @@ struct LightboxView: View {
         let totalSeconds = ms / 1000
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
-        return "\(minutes):\(String(format: "%02d", seconds))"
+        return "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
     }
 }

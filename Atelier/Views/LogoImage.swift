@@ -10,11 +10,13 @@ struct LogoImage: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
+                .accessibilityLabel("Atelier logo")
         } else {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: (size ?? 64) * 0.75))
                 .foregroundStyle(.secondary)
                 .frame(width: size, height: size)
+                .accessibilityLabel("Atelier")
         }
     }
 }

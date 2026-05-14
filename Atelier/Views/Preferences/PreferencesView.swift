@@ -10,6 +10,8 @@ struct PreferencesView: View {
     @AppStorage("scanIntervalSeconds") private var scanInterval: Int = 30
     @AppStorage("gridCellSize") private var defaultCellSize: Double = 200
 
+    @State private var previewColor: Color = .blue
+
     var body: some View {
         TabView {
             generalTab
@@ -35,14 +37,14 @@ struct PreferencesView: View {
     private var generalTab: some View {
         Form {
             Section {
-                HStack {
-                    Text("Tamaño de celda por defecto")
-                    Spacer()
-                    Slider(value: $defaultCellSize, in: 80...400, step: 10)
-                        .frame(width: 200)
-                    Text("\(Int(defaultCellSize))px")
-                        .monospacedDigit()
-                        .frame(width: 50)
+                LabeledContent("Tamaño de celda por defecto") {
+                    HStack(spacing: 8) {
+                        Slider(value: $defaultCellSize, in: 80...400, step: 10)
+                            .frame(width: 150)
+                        Text("\(Int(defaultCellSize))px")
+                            .monospacedDigit()
+                            .frame(width: 50)
+                    }
                 }
             }
         }
@@ -53,40 +55,31 @@ struct PreferencesView: View {
     private var appearanceTab: some View {
         Form {
             Section("Color del tema") {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Tono")
-                        Spacer()
-                        Slider(value: $glassTheme.tintHue, in: 0...1)
-                            .frame(width: 200)
-                    }
-
-                    ColorPicker("Previsualización", selection: Binding(
-                        get: { Color(hue: glassTheme.tintHue, saturation: 0.65, brightness: 0.95) },
-                        set: { newColor in
-                            let nsColor = NSColor(newColor)
-                            glassTheme.tintHue = Double(nsColor.hueComponent)
-                        }
-                    ))
-                    .disabled(true)
+                LabeledContent("Tono") {
+                    Slider(value: $glassTheme.tintHue, in: 0...1)
+                        .frame(width: 200)
                 }
+
+                ColorPicker("Previsualización", selection: $previewColor)
+                    .disabled(true)
+                    .onChange(of: glassTheme.tintHue) { _, _ in previewColor = glassTheme.tintColor }
+                    .onChange(of: glassTheme.opacity) { _, _ in previewColor = glassTheme.tintColor }
+                    .task { previewColor = glassTheme.tintColor }
             }
 
             Section("Transparencia") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Opacidad")
-                        Spacer()
+                LabeledContent("Opacidad") {
+                    HStack(spacing: 4) {
                         Slider(value: $glassTheme.opacity, in: 0.02...0.40)
-                            .frame(width: 200)
+                            .frame(width: 160)
                         Text("\(Int(glassTheme.opacity * 100))%")
                             .monospacedDigit()
                             .frame(width: 40)
                     }
-                    Text("A menor porcentaje, más sutil el efecto glass")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
+                Text("A menor porcentaje, más sutil el efecto glass")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -143,20 +136,20 @@ struct PreferencesView: View {
     private var performanceTab: some View {
         Form {
             Section {
-                HStack {
-                    Text("Límite de caché de thumbnails")
-                    Spacer()
-                    TextField("MB", value: $cacheLimitMB, format: .number)
-                        .frame(width: 80)
-                    Text("MB")
+                LabeledContent("Límite de caché de thumbnails") {
+                    HStack(spacing: 4) {
+                        TextField("", value: $cacheLimitMB, format: .number)
+                            .frame(width: 80)
+                        Text("MB")
+                    }
                 }
 
-                HStack {
-                    Text("Intervalo de escaneo automático")
-                    Spacer()
-                    TextField("segundos", value: $scanInterval, format: .number)
-                        .frame(width: 80)
-                    Text("seg")
+                LabeledContent("Intervalo de escaneo automático") {
+                    HStack(spacing: 4) {
+                        TextField("", value: $scanInterval, format: .number)
+                            .frame(width: 80)
+                        Text("seg")
+                    }
                 }
             }
         }

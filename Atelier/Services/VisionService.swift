@@ -130,6 +130,68 @@ actor VisionService {
         }
     }
 
+    func runFaceEmbedding(url: URL, bbox: (x: Double, y: Double, w: Double, h: Double)) async throws -> Data? {
+        let image = try loadCGImage(from: url)
+        let pad = 0.15
+        let cx = bbox.x + bbox.w / 2
+        let cy = bbox.y + bbox.h / 2
+        let side = max(bbox.w, bbox.h) * (1 + pad)
+        let nx = max(0, cx - side / 2)
+        let ny = max(0, cy - side / 2)
+        let nw = min(side, 1 - nx)
+        let nh = min(side, 1 - ny)
+
+        let cropRect = CGRect(
+            x: nx * Double(image.width),
+            y: (1 - ny - nh) * Double(image.height),
+            width: nw * Double(image.width),
+            height: nh * Double(image.height)
+        )
+        guard let cropped = image.cropping(to: cropRect) else { return nil }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = VNGenerateImageFeaturePrintRequest { request, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let obs = (request.results as? [VNFeaturePrintObservation])?.first else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                do {
+                    let data = try NSKeyedArchiver.archivedData(withRootObject: obs, requiringSecureCoding: true)
+                    continuation.resume(returning: data)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+            request.imageCropAndScaleOption = .centerCrop
+
+            let handler = VNImageRequestHandler(cgImage: cropped, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+
+    nonisolated static func decodeFeaturePrint(_ data: Data) -> VNFeaturePrintObservation? {
+        try? NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: data)
+    }
+
+    nonisolated static func distance(_ a: Data, _ b: Data) -> Float? {
+        guard let oa = decodeFeaturePrint(a), let ob = decodeFeaturePrint(b) else { return nil }
+        var dist: Float = 0
+        do {
+            try oa.computeDistance(&dist, to: ob)
+            return dist
+        } catch {
+            return nil
+        }
+    }
+
     private func loadCGImage(from url: URL) throws -> CGImage {
         guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
               let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {

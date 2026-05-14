@@ -10,6 +10,7 @@ final class IndexingService: @unchecked Sendable {
     private let bookmarkManager: BookmarkManager
     private let visionService: VisionService
     private let visionRepo: VisionRepository
+    private let clusteringService: FaceClusteringService
 
     var onProgress: ((_ current: Int, _ total: Int) -> Void)?
     var onAssetIndexed: ((Asset) -> Void)?
@@ -21,7 +22,8 @@ final class IndexingService: @unchecked Sendable {
         thumbnailService: ThumbnailService,
         bookmarkManager: BookmarkManager,
         visionService: VisionService,
-        visionRepo: VisionRepository
+        visionRepo: VisionRepository,
+        clusteringService: FaceClusteringService
     ) {
         self.assetRepo = assetRepo
         self.rootRepo = rootRepo
@@ -30,6 +32,7 @@ final class IndexingService: @unchecked Sendable {
         self.bookmarkManager = bookmarkManager
         self.visionService = visionService
         self.visionRepo = visionRepo
+        self.clusteringService = clusteringService
     }
 
     func scanRoot(_ root: LibraryRoot) async {
@@ -115,7 +118,8 @@ final class IndexingService: @unchecked Sendable {
                         bboxX: $0.bboxX, bboxY: $0.bboxY,
                         bboxW: $0.bboxW, bboxH: $0.bboxH,
                         quality: $0.quality, personId: nil,
-                        confidence: nil, isConfirmed: false, isReference: false
+                        confidence: nil, isConfirmed: false, isReference: false,
+                        embedding: nil, clusterId: nil
                     )
                 }
                 try await visionRepo.saveFaceObservations(records)
@@ -176,8 +180,19 @@ final class IndexingService: @unchecked Sendable {
             importedAt: existing?.importedAt ?? now,
             indexedAt: now,
             indexingVersion: 1,
-            deletedAt: nil
+            deletedAt: nil,
+            source: nil,
+            sourceAccount: nil
         )
+
+        let detected = SourceDetector.detect(filename: url.lastPathComponent)
+        if detected.source != .unknown {
+            asset.source = detected.source.rawValue
+            asset.sourceAccount = detected.account
+        } else {
+            asset.source = existing?.source
+            asset.sourceAccount = existing?.sourceAccount
+        }
 
         if mediaType == .image {
             if let dims = extractImageDimensions(url: url) {

@@ -4,11 +4,13 @@ struct InspectorPanel: View {
     let asset: Asset
     let tagRepo: TagRepository
     let visionRepo: VisionRepository
+    let personRepo: PersonRepository
 
     @State private var assetTags: [(tag: Tag, source: String, confidence: Double?)] = []
     @State private var classifications: [VisionClassification] = []
     @State private var ocrText: String?
-    @State private var faceCount = 0
+    @State private var faceObservations: [FaceObservation] = []
+    @State private var allPersons: [Person] = []
     @State private var showAddTag = false
     @State private var newTagText = ""
 
@@ -17,6 +19,7 @@ struct InspectorPanel: View {
             VStack(alignment: .leading, spacing: 16) {
                 preview
                 fileInfo
+                sourceSection
                 tagsSection
                 visionSection
                 metadataSection
@@ -71,6 +74,32 @@ struct InspectorPanel: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(3)
+        }
+    }
+
+    @ViewBuilder
+    private var sourceSection: some View {
+        if let sourceRaw = asset.source {
+            let kind = AssetSource(rawValue: sourceRaw) ?? .unknown
+            HStack(spacing: 10) {
+                Image(systemName: kind.symbol)
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                    .frame(width: 24)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(kind.label)
+                        .font(.subheadline.weight(.medium))
+                    if let account = asset.sourceAccount {
+                        Text("@\(account)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
+                Spacer()
+            }
+            .padding(10)
+            .background(.tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
     }
 
@@ -174,7 +203,9 @@ struct InspectorPanel: View {
 
     @ViewBuilder
     private var visionSection: some View {
-        if !classifications.isEmpty || ocrText != nil || faceCount > 0 {
+        let hasData = !classifications.isEmpty || ocrText != nil || !faceObservations.isEmpty
+
+        if hasData {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Vision")
                     .font(.subheadline.weight(.semibold))
@@ -187,10 +218,10 @@ struct InspectorPanel: View {
                         FlowLayout(spacing: 4) {
                             ForEach(classifications.prefix(10), id: \.label) { c in
                                 Text(c.label)
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(c.confidence * 0.4))
+                                    .background(.blue.tertiary)
                                     .clipShape(.rect(cornerRadius: 4))
                             }
                         }
@@ -209,12 +240,85 @@ struct InspectorPanel: View {
                     }
                 }
 
-                if faceCount > 0 {
-                    Label("\(faceCount) cara\(faceCount == 1 ? "" : "s") detectada\(faceCount == 1 ? "" : "s")", systemImage: "person.crop.rectangle")
-                        .font(.caption)
+                if !faceObservations.isEmpty {
+                    faceSection
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var faceSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(faceObservations.count) cara\(faceObservations.count == 1 ? "" : "s") detectada\(faceObservations.count == 1 ? "" : "s")")
+                .font(.caption.weight(.medium))
+
+            ForEach(Array(faceObservations.enumerated()), id: \.element.id) { index, face in
+                faceRow(index: index, face: face)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func faceRow(index: Int, face: FaceObservation) -> some View {
+        HStack(spacing: 6) {
+            Text("Cara \(index + 1)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 48, alignment: .leading)
+
+            if face.isConfirmed, let personId = face.personId,
+               let person = allPersons.first(where: { $0.id == personId }) {
+                assignedFaceLabel(person: person, face: face)
+            } else {
+                unassignedFacePicker(face: face)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func assignedFaceLabel(person: Person, face: FaceObservation) -> some View {
+        Label(person.name, systemImage: "person.crop.circle.fill")
+            .font(.caption)
+            .foregroundStyle(.green)
+
+        Menu {
+            ForEach(allPersons, id: \.id) { p in
+                Button(p.name) {
+                    Task { await confirmFace(face, person: p) }
+                }
+            }
+            Divider()
+            Button("Desasignar", role: .destructive) {
+                Task { await rejectFace(face) }
+            }
+        } label: {
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.caption2)
+        }
+        .menuStyle(.borderlessButton)
+        .frame(width: 16)
+    }
+
+    @ViewBuilder
+    private func unassignedFacePicker(face: FaceObservation) -> some View {
+        Menu {
+            ForEach(allPersons, id: \.id) { person in
+                Button(person.name) {
+                    Task { await confirmFace(face, person: person) }
+                }
+            }
+            if allPersons.isEmpty {
+                Text("No hay personas creadas")
+                    .foregroundStyle(.secondary)
+            }
+        } label: {
+            Label("Asignar persona", systemImage: "person.crop.circle.badge.questionmark")
+                .font(.caption)
+        }
+        .menuStyle(.borderlessButton)
+        .disabled(allPersons.isEmpty)
     }
 
     @ViewBuilder
@@ -260,10 +364,30 @@ struct InspectorPanel: View {
             assetTags = try await tagRepo.tagsFor(assetId: assetId)
             classifications = try await visionRepo.classificationsFor(assetId: assetId)
             ocrText = try await visionRepo.ocrTextFor(assetId: assetId)
-            let faces = try await visionRepo.facesFor(assetId: assetId)
-            faceCount = faces.count
+            faceObservations = try await visionRepo.facesFor(assetId: assetId)
+            allPersons = try await personRepo.findAll()
         } catch {
             Logger.ui.error("Error cargando datos de Vision: \(error)")
+        }
+    }
+
+    private func confirmFace(_ face: FaceObservation, person: Person) async {
+        guard let faceId = face.id, let personId = person.id else { return }
+        do {
+            try await visionRepo.confirmFace(id: faceId, personId: personId)
+            await loadVisionData()
+        } catch {
+            Logger.ui.error("Error asignando cara a persona: \(error)")
+        }
+    }
+
+    private func rejectFace(_ face: FaceObservation) async {
+        guard let faceId = face.id else { return }
+        do {
+            try await visionRepo.rejectFace(id: faceId)
+            await loadVisionData()
+        } catch {
+            Logger.ui.error("Error desasignando cara: \(error)")
         }
     }
 
@@ -297,6 +421,6 @@ struct InspectorPanel: View {
         let totalSeconds = ms / 1000
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
-        return "\(minutes):\(String(format: "%02d", seconds))"
+        return "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
     }
 }

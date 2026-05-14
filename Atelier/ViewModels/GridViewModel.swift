@@ -44,6 +44,17 @@ final class GridViewModel {
         await load()
     }
 
+    func filterByAssetIds(_ ids: [Int64]) async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            assets = try await assetRepo.findByIds(ids)
+            totalCount = try await assetRepo.totalCount()
+        } catch {
+            Logger.ui.error("Error filtrando por ids: \(error)")
+        }
+    }
+
     func search(_ query: String) async {
         searchQuery = query
         await load()

@@ -89,7 +89,8 @@ final class AssetCell: NSCollectionViewItem {
 
         if asset.mediaType == .video, let durationMs = asset.durationMs {
             let totalSec = durationMs / 1000
-            videoBadge.stringValue = " \(totalSec / 60):\(String(format: "%02d", totalSec % 60)) "
+            let secs = totalSec % 60
+            videoBadge.stringValue = " \(totalSec / 60):\(secs < 10 ? "0" : "")\(secs) "
             videoBadge.isHidden = false
         } else if asset.mediaType == .video {
             videoBadge.stringValue = " ▶ "
@@ -108,16 +109,18 @@ final class AssetCell: NSCollectionViewItem {
 
         let filePath = asset.filePath
         Task { @MainActor [weak self] in
-            let image = await Task.detached(priority: .userInitiated) {
-                if FileManager.default.fileExists(atPath: thumbPath.path) {
-                    return NSImage(contentsOf: thumbPath)
-                } else {
-                    let icon = NSWorkspace.shared.icon(forFile: filePath)
-                    icon.size = NSSize(width: 200, height: 200)
-                    return icon
-                }
-            }.value
+            let image = await Self.loadImage(thumbPath: thumbPath, filePath: filePath)
             self?.thumbnailView.image = image
+        }
+    }
+
+    nonisolated private static func loadImage(thumbPath: URL, filePath: String) async -> NSImage? {
+        if FileManager.default.fileExists(atPath: thumbPath.path) {
+            return NSImage(contentsOf: thumbPath)
+        } else {
+            let icon = NSWorkspace.shared.icon(forFile: filePath)
+            icon.size = NSSize(width: 200, height: 200)
+            return icon
         }
     }
 
@@ -125,7 +128,8 @@ final class AssetCell: NSCollectionViewItem {
 
     func updateBlur() {
         if isBlurred {
-            thumbnailView.contentFilters = [CIFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: 12])!]
+            guard let filter = CIFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: 12]) else { return }
+            thumbnailView.contentFilters = [filter]
         } else {
             thumbnailView.contentFilters = []
         }

@@ -12,6 +12,8 @@ struct AtelierApp: App {
     let tagRepo: TagRepository
     let personRepo: PersonRepository
     let visionRepo: VisionRepository
+    let clusteringService: FaceClusteringService
+    let organizeService: OrganizeService
     let fileWatcher: FileWatcher
     let volumeMonitor: VolumeMonitor
     let glassTheme = GlassTheme()
@@ -46,6 +48,15 @@ struct AtelierApp: App {
 
         let visionService = VisionService()
 
+        self.organizeService = OrganizeService(assetRepo: assetRepo, tagRepo: tagRepo, db: db)
+
+        let clusteringService = FaceClusteringService(
+            visionRepo: visionRepo,
+            assetRepo: assetRepo,
+            visionService: visionService
+        )
+        self.clusteringService = clusteringService
+
         let indexingService = IndexingService(
             assetRepo: assetRepo,
             rootRepo: rootRepo,
@@ -53,7 +64,8 @@ struct AtelierApp: App {
             thumbnailService: thumbnailService,
             bookmarkManager: bookmarkManager,
             visionService: visionService,
-            visionRepo: visionRepo
+            visionRepo: visionRepo,
+            clusteringService: clusteringService
         )
         self.indexingService = indexingService
 
@@ -79,12 +91,19 @@ struct AtelierApp: App {
                 tagRepo: tagRepo,
                 personRepo: personRepo,
                 visionRepo: visionRepo,
+                clusteringService: clusteringService,
                 fileWatcher: fileWatcher,
                 volumeMonitor: volumeMonitor,
                 glassTheme: glassTheme
             )
         }
         .defaultSize(width: 1000, height: 700)
+
+        Window("Organizar biblioteca", id: "organize") {
+            OrganizeView(organizeService: organizeService)
+        }
+        .defaultSize(width: 1180, height: 720)
+
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button("Preferencias...") {

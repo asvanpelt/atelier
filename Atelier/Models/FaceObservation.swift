@@ -13,6 +13,8 @@ struct FaceObservation: Codable {
     var confidence: Double?
     var isConfirmed: Bool
     var isReference: Bool
+    var embedding: Data?
+    var clusterId: Int64?
 
     enum Columns {
         static let id = Column(CodingKeys.id)
@@ -21,6 +23,8 @@ struct FaceObservation: Codable {
         static let confidence = Column(CodingKeys.confidence)
         static let isConfirmed = Column(CodingKeys.isConfirmed)
         static let isReference = Column(CodingKeys.isReference)
+        static let embedding = Column(CodingKeys.embedding)
+        static let clusterId = Column(CodingKeys.clusterId)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +39,8 @@ struct FaceObservation: Codable {
         case confidence
         case isConfirmed = "is_confirmed"
         case isReference = "is_reference"
+        case embedding
+        case clusterId = "cluster_id"
     }
 }
 

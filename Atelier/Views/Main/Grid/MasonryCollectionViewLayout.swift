@@ -2,8 +2,8 @@ import AppKit
 
 final class MasonryCollectionViewLayout: NSCollectionViewLayout, @unchecked Sendable {
     var cellWidth: CGFloat = 200
-    var spacing: CGFloat = 6
-    var sectionInset: NSEdgeInsets = NSEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+    var spacing: CGFloat = 32
+    var sectionInset: NSEdgeInsets = NSEdgeInsets(top: 32, left: 32, bottom: 32, right: 32)
     var items: [Asset] = [] {
         didSet { invalidateLayout() }
     }
@@ -52,7 +52,8 @@ final class MasonryCollectionViewLayout: NSCollectionViewLayout, @unchecked Send
         }
 
         for item in 0..<itemCount {
-            let shortestColumn = columnHeights.firstIndex(of: columnHeights.min()!)!
+            guard let minHeight = columnHeights.min(),
+                  let shortestColumn = columnHeights.firstIndex(of: minHeight) else { break }
             let x = xOffsets[shortestColumn]
             let height = heightForItem(at: item, columnWidth: columnWidth)
             let y = columnHeights[shortestColumn]

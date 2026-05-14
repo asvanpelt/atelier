@@ -67,7 +67,38 @@ final class TagRepository: @unchecked Sendable {
     func delete(id: Int64) async throws {
         let pool = try db.pool
         try await pool.write { db in
+            try db.execute(sql: "DELETE FROM asset_tags WHERE tag_id = ?", arguments: [id])
             try db.execute(sql: "DELETE FROM tags WHERE id = ?", arguments: [id])
+        }
+    }
+
+    func merge(from sourceId: Int64, into targetId: Int64) async throws {
+        guard sourceId != targetId else { return }
+        let pool = try db.pool
+        try await pool.write { db in
+            try db.execute(
+                sql: "INSERT OR IGNORE INTO asset_tags (asset_id, tag_id, source, confidence, created_at) SELECT asset_id, ?, source, confidence, created_at FROM asset_tags WHERE tag_id = ?",
+                arguments: [targetId, sourceId]
+            )
+            try db.execute(sql: "DELETE FROM asset_tags WHERE tag_id = ?", arguments: [sourceId])
+            try db.execute(sql: "DELETE FROM tags WHERE id = ?", arguments: [sourceId])
+        }
+    }
+
+    func renameNamespace(from oldName: String?, to newName: String?) async throws {
+        let pool = try db.pool
+        try await pool.write { db in
+            if let oldName {
+                try db.execute(
+                    sql: "UPDATE tags SET namespace = ? WHERE namespace = ?",
+                    arguments: [newName, oldName]
+                )
+            } else {
+                try db.execute(
+                    sql: "UPDATE tags SET namespace = ? WHERE namespace IS NULL",
+                    arguments: [newName]
+                )
+            }
         }
     }
 
