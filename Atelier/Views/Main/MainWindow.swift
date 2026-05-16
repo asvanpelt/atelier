@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 struct MainWindow: View {
+    let profileStore: ProfileStore
     let libraryService: LibraryService
     let indexingService: IndexingService
     let thumbnailService: ThumbnailService
@@ -50,6 +51,7 @@ struct MainWindow: View {
     @State private var expandedSources: Set<String> = []
 
     init(
+        profileStore: ProfileStore,
         libraryService: LibraryService,
         indexingService: IndexingService,
         thumbnailService: ThumbnailService,
@@ -63,6 +65,7 @@ struct MainWindow: View {
         volumeMonitor: VolumeMonitor,
         glassTheme: GlassTheme
     ) {
+        self.profileStore = profileStore
         self.libraryService = libraryService
         self.indexingService = indexingService
         self.thumbnailService = thumbnailService
@@ -304,6 +307,11 @@ struct MainWindow: View {
             LogoImage(size: nil)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
+
+            ProfileSwitcher(store: profileStore)
+                .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 8, trailing: 8))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             Section("Biblioteca") {
                 Label("Todos los archivos", systemImage: "photo.on.rectangle")

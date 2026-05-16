@@ -22,14 +22,24 @@ actor ThumbnailService {
         guard asset.mediaType != .unknown else { return }
         let sourceURL = asset.fileURL
 
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            Logger.indexing.warning("Thumbnail: archivo origen no existe \(sourceURL.path)")
+            return
+        }
+
         for size in sizes {
             let destURL = cachePath(for: asset, size: size)
             if FileManager.default.fileExists(atPath: destURL.path) { continue }
 
-            if asset.mediaType == .image {
-                try await generateImageThumbnail(source: sourceURL, destination: destURL, size: size)
-            } else if asset.mediaType == .video {
-                try await generateVideoThumbnail(source: sourceURL, destination: destURL, size: size)
+            do {
+                if asset.mediaType == .image {
+                    try await generateImageThumbnail(source: sourceURL, destination: destURL, size: size)
+                } else if asset.mediaType == .video {
+                    try await generateVideoThumbnail(source: sourceURL, destination: destURL, size: size)
+                }
+            } catch {
+                Logger.indexing.error("Thumbnail \(size) falló para \(sourceURL.lastPathComponent): \(error.localizedDescription)")
+                throw error
             }
         }
     }

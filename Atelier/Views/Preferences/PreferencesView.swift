@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PreferencesView: View {
+    @Bindable var profileStore: ProfileStore
     var libraryRoots: [LibraryRoot]
     @Bindable var glassTheme: GlassTheme
     var onAddFolder: () -> Void
@@ -16,6 +17,9 @@ struct PreferencesView: View {
         TabView {
             generalTab
                 .tabItem { Label("General", systemImage: "gear") }
+
+            profilesTab
+                .tabItem { Label("Perfiles", systemImage: "person.2.crop.square.stack") }
 
             appearanceTab
                 .tabItem { Label("Apariencia", systemImage: "paintpalette") }
@@ -151,6 +155,61 @@ struct PreferencesView: View {
                         Text("seg")
                     }
                 }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var profilesTab: some View {
+        Form {
+            Section("Perfil activo") {
+                HStack(spacing: 10) {
+                    Image(systemName: profileStore.activeProfile.icon)
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(profileStore.activeProfile.name).font(.headline)
+                        Text(profileStore.activeProfile.id.uuidString)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.tertiary)
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+
+            Section("Todos los perfiles") {
+                ForEach(profileStore.profiles) { profile in
+                    HStack {
+                        Image(systemName: profile.icon)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 22)
+                        Text(profile.name)
+                        if profile.id == profileStore.activeProfileID {
+                            Text("(activo)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button {
+                            NSWorkspace.shared.selectFile(
+                                nil,
+                                inFileViewerRootedAtPath: AppConstants.profileDir(for: profile.id).path
+                            )
+                        } label: {
+                            Image(systemName: "folder")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Mostrar carpeta del perfil en Finder")
+                    }
+                }
+            }
+
+            Section {
+                Text("Para crear, renombrar o eliminar perfiles, usa el selector en la parte superior del sidebar.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

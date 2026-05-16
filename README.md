@@ -29,4 +29,18 @@ La especificación está dividida en documentos navegables:
 1. Leer [`docs/01-vision.md`](docs/01-vision.md) para entender el producto
 2. Revisar [`docs/02-stack.md`](docs/02-stack.md) y [`docs/10-roadmap.md`](docs/10-roadmap.md)
 3. Resolver [`docs/12-decisiones-pendientes.md`](docs/12-decisiones-pendientes.md) antes de empezar a codear
-4. Sesión 1 en Claude Code: setup del proyecto Xcode siguiendo Fase 0 del roadmap
+
+## Build local
+
+El proyecto se construye con Swift Package Manager (sin `.xcodeproj`).
+
+- **Desarrollo en Xcode**: abre `Package.swift` directamente con Xcode (File → Open…) y dale Run.
+- **Build desde terminal**:
+  ```
+  swift build -c release
+  ```
+- **Instalar como app del sistema** (Spotlight/Dock, firma ad-hoc):
+  ```
+  ./Scripts/install-local.sh
+  ```
+  El script compila en release, empaqueta el ejecutable en `/Applications/Atelier.app`, lo firma ad-hoc y lo registra en Launch Services.

@@ -67,7 +67,7 @@ struct Asset: Codable {
     }
 }
 
-extension Asset: FetchableRecord, PersistableRecord, TableRecord {
+extension Asset: FetchableRecord, MutablePersistableRecord, TableRecord {
     static let databaseTableName = "assets"
 
     mutating func didInsert(_ inserted: InsertionSuccess) {

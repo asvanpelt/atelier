@@ -1,6 +1,12 @@
 import Foundation
 import UniformTypeIdentifiers
 
+private let rawImageExtensions: Set<String> = [
+    "dng", "cr2", "cr3", "crw", "nef", "nrw", "arw", "srf", "sr2",
+    "raf", "orf", "rw2", "rwl", "pef", "ptx", "raw", "x3f",
+    "3fr", "fff", "iiq", "mef", "mos", "mrw", "k25", "kdc", "dcr"
+]
+
 extension URL {
     var mimeType: String {
         if let type = UTType(filenameExtension: pathExtension),
@@ -10,7 +16,18 @@ extension URL {
         return "application/octet-stream"
     }
 
+    var isRawImage: Bool {
+        let ext = pathExtension.lowercased()
+        if rawImageExtensions.contains(ext) { return true }
+        if let type = UTType(filenameExtension: ext),
+           type.conforms(to: .rawImage) {
+            return true
+        }
+        return false
+    }
+
     var isImage: Bool {
+        guard !isRawImage else { return false }
         guard let type = UTType(filenameExtension: pathExtension) else { return false }
         return type.conforms(to: .image) || type.conforms(to: .heic) || type.conforms(to: .heif)
     }

@@ -3,6 +3,7 @@ import AppKit
 
 @main
 struct AtelierApp: App {
+    let profileStore: ProfileStore
     let database: Database
     let libraryService: LibraryService
     let indexingService: IndexingService
@@ -20,6 +21,12 @@ struct AtelierApp: App {
 
     init() {
         NSApplication.shared.setActivationPolicy(.regular)
+
+        let profileStore = MainActor.assumeIsolated { ProfileStore() }
+        AppConstants.setActiveProfile(profileStore.activeProfileID)
+        Logger.general.info("Perfil activo: \(profileStore.activeProfile.name) (\(profileStore.activeProfileID.uuidString))")
+        self.profileStore = profileStore
+
         let db = Database()
         do {
             try db.setup()
@@ -83,6 +90,7 @@ struct AtelierApp: App {
     var body: some Scene {
         WindowGroup {
             MainWindow(
+                profileStore: profileStore,
                 libraryService: libraryService,
                 indexingService: indexingService,
                 thumbnailService: thumbnailService,
@@ -115,6 +123,7 @@ struct AtelierApp: App {
 
         Settings {
             PreferencesView(
+                profileStore: profileStore,
                 libraryRoots: libraryService.roots,
                 glassTheme: glassTheme,
                 onAddFolder: {}
