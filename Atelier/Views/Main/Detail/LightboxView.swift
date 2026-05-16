@@ -15,6 +15,8 @@ struct LightboxView: View {
     @State private var panAtGestureStart: CGSize = .zero
     @State private var zoomAtGestureStart: CGFloat = 1.0
     @State private var isDraggingPan: Bool = false
+    @State private var displayedImage: NSImage?
+    @State private var displayedImageIsFull: Bool = false
 
     private let minZoom: CGFloat = 1.0
     private let maxZoom: CGFloat = 8.0
@@ -28,7 +30,7 @@ struct LightboxView: View {
 
                 if asset.mediaType == .video {
                     videoPlayer(asset: asset)
-                } else if let image = loadImage(for: asset) {
+                } else if let image = displayedImage {
                     zoomableImage(image)
                         .padding()
                         .layoutPriority(1)
@@ -43,7 +45,10 @@ struct LightboxView: View {
             .background(glassTint)
             .focusable()
             .focused($isFocused)
-            .onAppear { isFocused = true }
+            .onAppear {
+                isFocused = true
+                Task { await loadFullImage(for: asset) }
+            }
             .onKeyPress(.leftArrow) {
                 navigate(by: -1)
                 return .handled
@@ -69,6 +74,8 @@ struct LightboxView: View {
             .onChange(of: selectedIndex) { _, _ in
                 updatePlayer()
                 resetZoom()
+                let currentAsset = assets[selectedIndex]
+                Task { await loadFullImage(for: currentAsset) }
             }
             .onDisappear {
                 player?.pause()
@@ -307,7 +314,39 @@ struct LightboxView: View {
         pb.writeObjects([image])
     }
 
-    private func loadImage(for asset: Asset) -> NSImage? {
+    @MainActor
+    private func loadFullImage(for asset: Asset) async {
+        guard asset.mediaType == .image else {
+            displayedImage = nil
+            displayedImageIsFull = false
+            return
+        }
+
+        // 1) Placeholder instantáneo desde thumbnail.
+        if let thumb = thumbnailImage(for: asset) {
+            displayedImage = thumb
+            displayedImageIsFull = false
+        }
+
+        let url = asset.fileURL
+        let targetId = asset.id
+
+        // 2) Cargar original en background.
+        let full: NSImage? = await Task.detached(priority: .userInitiated) {
+            NSImage(contentsOf: url)
+        }.value
+
+        // Sólo aplicar si el usuario no navegó a otro asset mientras tanto.
+        guard selectedIndex < assets.count,
+              assets[selectedIndex].id == targetId else { return }
+
+        if let full {
+            displayedImage = full
+            displayedImageIsFull = true
+        }
+    }
+
+    private func thumbnailImage(for asset: Asset) -> NSImage? {
         let hashPrefix = String(asset.fileHash.prefix(8))
         for size in [800, 400, 200] {
             let url = AppConstants.thumbnailsDir
@@ -318,7 +357,7 @@ struct LightboxView: View {
                 return image
             }
         }
-        return NSImage(contentsOf: asset.fileURL)
+        return nil
     }
 
     private func idealSize(for asset: Asset) -> CGSize {
