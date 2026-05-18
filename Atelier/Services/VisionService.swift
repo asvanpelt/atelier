@@ -4,6 +4,8 @@ import AppKit
 
 actor VisionService {
 
+    private static let maxPixelSize: CGFloat = 2048
+
     struct OCRResult {
         let text: String
         let language: String?
@@ -22,10 +24,47 @@ actor VisionService {
         let quality: Double?
     }
 
-    func runOCR(url: URL) async throws -> [OCRResult] {
-        let image = try loadCGImage(from: url)
+    struct VisionPipelineResult {
+        let ocr: [OCRResult]
+        let classifications: [ClassificationResult]
+        let faces: [FaceResult]
+    }
 
-        return try await withCheckedThrowingContinuation { continuation in
+    func runVision(url: URL) async throws -> VisionPipelineResult {
+        guard let image = loadCGImage(from: url) else {
+            throw VisionError.invalidImage
+        }
+
+        let ocr = try await runOCR(on: image)
+        let classifications = try await runClassification(on: image)
+        let faces = try await runFaceDetection(on: image)
+
+        return VisionPipelineResult(ocr: ocr, classifications: classifications, faces: faces)
+    }
+
+    func runOCR(url: URL) async throws -> [OCRResult] {
+        guard let image = loadCGImage(from: url) else {
+            throw VisionError.invalidImage
+        }
+        return try await runOCR(on: image)
+    }
+
+    func runClassification(url: URL) async throws -> [ClassificationResult] {
+        guard let image = loadCGImage(from: url) else {
+            throw VisionError.invalidImage
+        }
+        return try await runClassification(on: image)
+    }
+
+    func runFaceDetection(url: URL) async throws -> [FaceResult] {
+        guard let image = loadCGImage(from: url) else {
+            throw VisionError.invalidImage
+        }
+        return try await runFaceDetection(on: image)
+    }
+
+    private func runOCR(on image: CGImage) async throws -> [OCRResult] {
+        try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -61,10 +100,8 @@ actor VisionService {
         }
     }
 
-    func runClassification(url: URL) async throws -> [ClassificationResult] {
-        let image = try loadCGImage(from: url)
-
-        return try await withCheckedThrowingContinuation { continuation in
+    private func runClassification(on image: CGImage) async throws -> [ClassificationResult] {
+        try await withCheckedThrowingContinuation { continuation in
             let request = VNClassifyImageRequest { request, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -93,10 +130,8 @@ actor VisionService {
         }
     }
 
-    func runFaceDetection(url: URL) async throws -> [FaceResult] {
-        let image = try loadCGImage(from: url)
-
-        return try await withCheckedThrowingContinuation { continuation in
+    private func runFaceDetection(on image: CGImage) async throws -> [FaceResult] {
+        try await withCheckedThrowingContinuation { continuation in
             let request = VNDetectFaceRectanglesRequest { request, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -131,7 +166,7 @@ actor VisionService {
     }
 
     func runFaceEmbedding(url: URL, bbox: (x: Double, y: Double, w: Double, h: Double)) async throws -> Data? {
-        let image = try loadCGImage(from: url)
+        guard let image = loadCGImage(from: url) else { return nil }
         let pad = 0.15
         let cx = bbox.x + bbox.w / 2
         let cy = bbox.y + bbox.h / 2
@@ -192,12 +227,18 @@ actor VisionService {
         }
     }
 
-    private func loadCGImage(from url: URL) throws -> CGImage {
-        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
-            throw VisionError.invalidImage
+    private func loadCGImage(from url: URL) -> CGImage? {
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+            return nil
         }
-        return cgImage
+
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: Self.maxPixelSize
+        ]
+
+        return CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options as CFDictionary)
     }
 }
 

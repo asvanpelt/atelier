@@ -181,7 +181,7 @@ struct MainWindow: View {
                     onSkip: { showWelcome = false }
                 )
             }
-            .searchable(text: $searchText, prompt: "Buscar por nombre...")
+            .searchable(text: $searchText, placement: .sidebar, prompt: "Buscar por nombre...")
             .onChange(of: searchText) { _, newValue in
                 Task {
                     await gridVM.search(newValue)
@@ -248,7 +248,7 @@ struct MainWindow: View {
                     }
                 }
 
-                ToolbarItem(placement: .status) {
+                ToolbarItem(placement: .navigation) {
                     if isScanning {
                         HStack(spacing: 6) {
                             ProgressView(value: Double(scanCurrent), total: Double(max(1, scanTotal)))
@@ -617,12 +617,21 @@ struct MainWindow: View {
 
         analyzeProgress = ""
         isAnalyzing = false
+        resetCursor()
         await loadTagsAndPersons()
+    }
+
+    private func resetCursor() {
+        for _ in 0..<8 { NSCursor.pop() }
+        NSCursor.arrow.set()
     }
 
     private func detectSources() async {
         isDetectingSources = true
-        defer { isDetectingSources = false }
+        defer {
+            isDetectingSources = false
+            resetCursor()
+        }
         do {
             let pending = try await assetRepo.allWithoutSource()
             let total = pending.count

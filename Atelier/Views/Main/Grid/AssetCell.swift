@@ -9,6 +9,8 @@ final class AssetCell: NSCollectionViewItem {
     private let selectionOverlay = NSView()
     private var trackingArea: NSTrackingArea?
     private var currentAsset: Asset?
+    private var mouseDownLocation: NSPoint?
+    private static let dragThreshold: CGFloat = 6
 
     var onShowInFinder: ((Asset) -> Void)?
     var onOpenWith: ((Asset) -> Void)?
@@ -237,17 +239,30 @@ final class AssetCell: NSCollectionViewItem {
     // MARK: - Drag
 
     override func mouseDown(with event: NSEvent) {
-        super.mouseDown(with: event)
         if event.clickCount == 2, let asset = currentAsset {
+            mouseDownLocation = nil
             onDoubleClick?(asset)
+            return
         }
+        mouseDownLocation = event.locationInWindow
+        super.mouseDown(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        mouseDownLocation = nil
+        super.mouseUp(with: event)
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let asset = currentAsset else { return }
+        guard let asset = currentAsset, let start = mouseDownLocation else { return }
+        let dx = event.locationInWindow.x - start.x
+        let dy = event.locationInWindow.y - start.y
+        guard (dx * dx + dy * dy) >= (Self.dragThreshold * Self.dragThreshold) else { return }
+
         let fileURL = asset.fileURL
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
 
+        mouseDownLocation = nil
         let dragItem = NSDraggingItem(pasteboardWriter: fileURL as NSURL)
         let iconImage = thumbnailView.image ?? NSWorkspace.shared.icon(forFile: asset.filePath)
         dragItem.setDraggingFrame(view.bounds, contents: iconImage)

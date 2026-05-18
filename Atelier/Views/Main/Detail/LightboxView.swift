@@ -79,7 +79,10 @@ struct LightboxView: View {
             }
             .onDisappear {
                 player?.pause()
+                player?.replaceCurrentItem(with: nil)
                 player = nil
+                for _ in 0..<8 { NSCursor.pop() }
+                NSCursor.arrow.set()
             }
         }
     }
@@ -238,12 +241,29 @@ struct LightboxView: View {
 
     @ViewBuilder
     private func videoPlayer(asset: Asset) -> some View {
-        VideoPlayer(player: playerForAsset(asset))
+        VideoPlayer(player: player)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .layoutPriority(1)
-            .onAppear {
-                updatePlayer()
+            .clipped()
+            .task(id: asset.id) {
+                await loadPlayer(for: asset)
             }
+    }
+
+    private func loadPlayer(for asset: Asset) async {
+        let url = asset.fileURL
+        let targetId = asset.id
+        let newPlayer = await Task.detached(priority: .userInitiated) {
+            AVPlayer(url: url)
+        }.value
+        guard selectedIndex < assets.count,
+              assets[selectedIndex].id == targetId else {
+            newPlayer.pause()
+            return
+        }
+        player?.pause()
+        player = newPlayer
+        newPlayer.play()
     }
 
     @ViewBuilder
@@ -287,21 +307,10 @@ struct LightboxView: View {
         }
     }
 
-    private func playerForAsset(_ asset: Asset) -> AVPlayer {
-        if let player { return player }
-        let newPlayer = AVPlayer(url: asset.fileURL)
-        player = newPlayer
-        return newPlayer
-    }
-
     private func updatePlayer() {
         guard selectedIndex < assets.count else { return }
         let asset = assets[selectedIndex]
-        if asset.mediaType == .video {
-            let newPlayer = AVPlayer(url: asset.fileURL)
-            player = newPlayer
-            newPlayer.play()
-        } else {
+        if asset.mediaType != .video {
             player?.pause()
             player = nil
         }

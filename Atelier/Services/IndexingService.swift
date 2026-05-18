@@ -36,6 +36,13 @@ final class IndexingService: @unchecked Sendable {
     }
 
     func scanRoot(_ root: LibraryRoot) async {
+        await Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            await self._scanRoot(root)
+        }.value
+    }
+
+    private func _scanRoot(_ root: LibraryRoot) async {
         guard root.exists else {
             Logger.indexing.warning("Root no accesible: \(root.path)")
             return
@@ -45,18 +52,26 @@ final class IndexingService: @unchecked Sendable {
         _ = bookmarkManager.startAccessing(url)
         defer { bookmarkManager.stopAccessing(url) }
 
-        let fsItems = enumerateMediaFiles(in: url)
+        let fsItems = await enumerateMediaFiles(in: url)
         let totalCount = fsItems.count
 
         Logger.indexing.info("Escaneando \(root.path): \(totalCount) archivos encontrados")
 
+        var lastProgressEmit: TimeInterval = 0
+        let progressInterval: TimeInterval = 0.1
+
         for (index, fileURL) in fsItems.enumerated() {
-            onProgress?(index + 1, totalCount)
+            let now = Date.now.timeIntervalSinceReferenceDate
+            let isLast = (index + 1) == totalCount
+            if isLast || (now - lastProgressEmit) >= progressInterval {
+                lastProgressEmit = now
+                onProgress?(index + 1, totalCount)
+            }
 
             let path = fileURL.path
             let existing = try? await assetRepo.findByPath(path)
 
-            let currentMod = fileURL.modificationDate ?? Date()
+            let currentMod = fileURL.modificationDate ?? Date.now
             let currentSize = fileURL.fileSize
 
             if let existing {
@@ -82,7 +97,7 @@ final class IndexingService: @unchecked Sendable {
         await detectDeletedOrMoved(rootPath: root.path, fsPaths: fsPaths)
 
         if let rootId = root.id {
-            try? await rootRepo.updateLastScan(id: rootId, at: Date())
+            try? await rootRepo.updateLastScan(id: rootId, at: Date.now)
         }
     }
 
@@ -90,13 +105,10 @@ final class IndexingService: @unchecked Sendable {
         let url = asset.fileURL
 
         do {
-            async let ocrTask = visionService.runOCR(url: url)
-            async let classTask = visionService.runClassification(url: url)
-            async let faceTask = visionService.runFaceDetection(url: url)
-
-            let ocrResults = try await ocrTask
-            let classifications = try await classTask
-            let faces = try await faceTask
+            let result = try await visionService.runVision(url: url)
+            let ocrResults = result.ocr
+            let classifications = result.classifications
+            let faces = result.faces
 
             let fullText = ocrResults.map(\.text).joined(separator: " ")
             if !fullText.isEmpty {
@@ -221,20 +233,22 @@ final class IndexingService: @unchecked Sendable {
         return saved
     }
 
-    private func enumerateMediaFiles(in directory: URL) -> [URL] {
-        guard let enumerator = FileManager.default.enumerator(
-            at: directory,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return [] }
+    private func enumerateMediaFiles(in directory: URL) async -> [URL] {
+        await Task.detached(priority: .userInitiated) {
+            guard let enumerator = FileManager.default.enumerator(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            ) else { return [] }
 
-        var files: [URL] = []
-        for case let fileURL as URL in enumerator {
-            if fileURL.isImage || fileURL.isVideo {
-                files.append(fileURL)
+            var files: [URL] = []
+            while let fileURL = enumerator.nextObject() as? URL {
+                if fileURL.isImage || fileURL.isVideo {
+                    files.append(fileURL)
+                }
             }
-        }
-        return files
+            return files
+        }.value
     }
 
     private func extractImageDimensions(url: URL) -> (width: Int, height: Int)? {
