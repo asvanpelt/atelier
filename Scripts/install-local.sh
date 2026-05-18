@@ -1,7 +1,6 @@
 #!/bin/bash
-# Construye Atelier con SPM (que toma todos los archivos del repo, a diferencia
-# del .xcodeproj que está desactualizado) y empaqueta el ejecutable en un .app
-# bundle ad-hoc firmado, instalado en /Applications.
+# Construye Atelier con SPM y empaqueta el ejecutable en un .app bundle ad-hoc
+# firmado, instalado en /Applications.
 #
 # Uso:
 #   ./Scripts/install-local.sh             # release (recomendado)
